@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 820" font-family="Inter, Arial, sans-serif">
+  <style>
+    .actor-box { fill: #DCE9EE; stroke: #0B4F6C; stroke-width: 1; }
+    .actor-label { font-size: 12px; font-weight: 600; fill: #1F2937; text-anchor: middle; }
+    .lifeline { stroke: #9CA3AF; stroke-width: 1; stroke-dasharray: 4 3; }
+    .activation { fill: #F3E3C8; stroke: #C98A2E; stroke-width: 1; }
+    .msg { stroke: #1F2937; stroke-width: 1.2; fill: none; }
+    .msg-return { stroke: #1F2937; stroke-width: 1; stroke-dasharray: 5 3; fill: none; }
+    .msg-label { font-size: 10.5px; fill: #1F2937; }
+    .note { fill: #FBF0E1; stroke: #C77B21; stroke-width: 0.75; }
+    .note-label { font-size: 9.5px; fill: #4B5563; font-style: italic; }
+    .title { font-size: 15px; font-weight: 600; fill: #0B4F6C; }
+    .frame { fill: none; stroke: #C98A2E; stroke-width: 1; }
+    .frame-label { font-size: 10px; font-weight: 600; fill: #C98A2E; }
+  </style>
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9Z" fill="#1F2937"/>
+    </marker>
+  </defs>
+
+  <text class="title" x="480" y="24" text-anchor="middle">Sequence: Border Check-In (Assess / Finalize split)</text>
+
+  <!-- Lifelines -->
+  <g>
+    <rect class="actor-box" x="15" y="45" width="150" height="34" rx="6"/>
+    <text class="actor-label" x="90" y="66">Immigration Officer</text>
+    <line class="lifeline" x1="90" y1="79" x2="90" y2="780"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="235" y="45" width="150" height="34" rx="6"/>
+    <text class="actor-label" x="310" y="66">React Frontend</text>
+    <line class="lifeline" x1="310" y1="79" x2="310" y2="780"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="455" y="45" width="150" height="34" rx="6"/>
+    <text class="actor-label" x="530" y="66">Express API</text>
+    <line class="lifeline" x1="530" y1="79" x2="530" y2="780"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="675" y="45" width="150" height="34" rx="6"/>
+    <text class="actor-label" x="750" y="66">calculate_risk_score()</text>
+    <line class="lifeline" x1="750" y1="79" x2="750" y2="780"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="855" y="45" width="90" height="34" rx="6"/>
+    <text class="actor-label" x="900" y="66">Postgres</text>
+    <line class="lifeline" x1="900" y1="79" x2="900" y2="780"/>
+  </g>
+
+  <!-- Frame: ASSESS -->
+  <rect class="frame" x="20" y="95" width="905" height="330" rx="4"/>
+  <text class="frame-label" x="30" y="112">POST /api/border/assess — no border_logs write yet</text>
+
+  <rect class="activation" x="305" y="125" width="10" height="30"/>
+  <path class="msg" d="M90,130 L305,130" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="95" y="125">1: enter passport number + checkpoint, "Run check"</text>
+
+  <rect class="activation" x="525" y="140" width="10" height="270"/>
+  <path class="msg" d="M315,145 L525,145" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="330" y="140">2: lookup passport_id (RLS-scoped select)</text>
+
+  <path class="msg" d="M535,165 L535,165" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="545" y="165">3: POST /api/border/assess { passportId, officerId }</text>
+
+  <path class="msg" d="M535,190 L535,190" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="545" y="190">4: simulateBiometricMatch(passportId) — deterministic</text>
+  <text class="msg-label" x="545" y="202">    hash-seeded confidence score</text>
+
+  <path class="msg" d="M535,222 L895,222" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="560" y="217">5: insert biometric_verifications</text>
+
+  <path class="msg" d="M535,250 L745,250" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="555" y="245">6: rpc('calculate_risk_score', passportId)</text>
+
+  <rect class="activation" x="745" y="250" width="10" height="130"/>
+  <path class="msg" d="M755,270 L895,270" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="760" y="265">7: query watchlist, digital_visas, overstaying_travelers,</text>
+  <text class="msg-label" x="760" y="277">    biometric_verifications, border_logs (velocity)</text>
+  <path class="msg-return" d="M895,300 L755,300" marker-end="url(#arrow2)"/>
+
+  <path class="msg-return" d="M745,355 L535,355" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="555" y="350">8: return { score, risk_level, reasons[] }</text>
+
+  <path class="msg-return" d="M525,400 L315,400" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="330" y="395">9: return { biometric, risk, watchlistHit, recommendation }</text>
+
+  <!-- Between frames -->
+  <rect class="activation" x="305" y="425" width="10" height="30"/>
+  <path class="msg-return" d="M315,440 L90,440" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="95" y="435">10: display biometric %, risk score, reasons, recommendation</text>
+
+  <rect class="note" x="90" y="460" width="500" height="30" rx="4"/>
+  <text class="note-label" x="102" y="479">Officer reviews the recommendation but has not yet committed a decision</text>
+
+  <!-- Frame: FINALIZE -->
+  <rect class="frame" x="20" y="505" width="905" height="270" rx="4"/>
+  <text class="frame-label" x="30" y="522">POST /api/border/finalize — officer's decision is what gets written</text>
+
+  <rect class="activation" x="85" y="535" width="10" height="30"/>
+  <text class="msg-label" x="95" y="545">11: officer selects final decision (confirm or override)</text>
+
+  <rect class="activation" x="305" y="575" width="10" height="30"/>
+  <path class="msg" d="M90,580 L305,580" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="95" y="575">12: click "Confirm &amp; log decision"</text>
+
+  <rect class="activation" x="525" y="595" width="10" height="90"/>
+  <path class="msg" d="M315,600 L525,600" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="330" y="595">13: POST /api/border/finalize { ..., decision }</text>
+
+  <path class="msg" d="M535,630 L895,630" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="555" y="625">14: insert border_logs { decision: officer's choice,</text>
+  <text class="msg-label" x="555" y="637">     risk_score, watchlist_hit, biometric_verification_id }</text>
+  <path class="msg-return" d="M895,660 L535,660" marker-end="url(#arrow2)"/>
+
+  <path class="msg-return" d="M525,700 L315,700" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="330" y="695">15: confirmation</text>
+
+  <path class="msg-return" d="M305,725 L90,725" marker-end="url(#arrow2)"/>
+  <text class="msg-label" x="95" y="745">16: "Decision recorded" — ready for next traveler</text>
+</svg>

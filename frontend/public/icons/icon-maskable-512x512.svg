@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B4F6C" />
+      <stop offset="50%" stop-color="#0E3A52" />
+      <stop offset="100%" stop-color="#1E8E5A" />
+    </linearGradient>
+    <linearGradient id="goldMask" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="50%" stop-color="#EAB308" />
+      <stop offset="100%" stop-color="#CA8A04" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full-bleed background for maskable safe zone (minimum 80% inner circle) -->
+  <rect width="512" height="512" fill="url(#bgMask)" />
+
+  <g transform="translate(25.6, 25.6) scale(0.9)">
+    <circle cx="256" cy="256" r="190" fill="none" stroke="url(#goldMask)" stroke-width="4" opacity="0.4" />
+    <path d="M 256,105 L 355,148 C 355,255 290,328 256,358 C 222,328 157,255 157,148 Z" fill="#0E2A3A" stroke="url(#goldMask)" stroke-width="7" stroke-linejoin="round" />
+    
+    <clipPath id="maskClip">
+      <path d="M 256,107 L 351,148 C 351,253 288,324 256,353 C 224,324 161,253 161,148 Z" />
+    </clipPath>
+
+    <g clip-path="url(#maskClip)">
+      <rect x="145" y="105" width="222" height="65" fill="#1E8E5A" />
+      <rect x="145" y="170" width="222" height="50" fill="#FFFFFF" />
+      <rect x="145" y="220" width="222" height="140" fill="#0B4F6C" />
+      <polygon points="256,170 263,190 284,190 267,202 273,222 256,210 239,222 245,202 228,190 249,190" fill="url(#goldMask)" stroke="#B45309" stroke-width="1.2" />
+    </g>
+
+    <text x="256" y="425" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="900" font-size="30" letter-spacing="6" fill="#FFFFFF">
+      SLID
+    </text>
+    <text x="256" y="445" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-weight="700" font-size="11" letter-spacing="3" fill="url(#goldMask)">
+      IMMIGRATION
+    </text>
+  </g>
+</svg>

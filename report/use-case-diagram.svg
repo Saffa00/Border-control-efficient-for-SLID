@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1290" font-family="Inter, Arial, sans-serif">
+  <style>
+    .boundary { fill: none; stroke: #4B5563; stroke-width: 1.2; stroke-dasharray: 6 4; }
+    .boundary-label { font-size: 15px; font-weight: 600; fill: #0B4F6C; }
+    .actor-line { stroke: #1F2937; stroke-width: 1.6; fill: none; }
+    .actor-label { font-size: 12px; font-weight: 600; fill: #1F2937; text-anchor: middle; }
+    .uc-ellipse { fill: #DCE9EE; stroke: #0B4F6C; stroke-width: 1; }
+    .uc-label { font-size: 11px; fill: #1F2937; text-anchor: middle; }
+    .assoc { stroke: #9CA3AF; stroke-width: 1; fill: none; }
+    .section-label { font-size: 12px; font-weight: 600; fill: #C98A2E; }
+  </style>
+
+  <!-- System boundary -->
+  <rect class="boundary" x="180" y="10" width="660" height="1270" rx="10"/>
+  <text class="boundary-label" x="510" y="35" text-anchor="middle">SL Immigration Management System</text>
+
+  <!-- ============ APPLICANT ============ -->
+  <g id="actor-applicant">
+    <circle class="actor-line" cx="60" cy="175" r="14"/>
+    <line class="actor-line" x1="60" y1="189" x2="60" y2="230"/>
+    <line class="actor-line" x1="60" y1="205" x2="40" y2="222"/>
+    <line class="actor-line" x1="60" y1="205" x2="80" y2="222"/>
+    <line class="actor-line" x1="60" y1="230" x2="45" y2="258"/>
+    <line class="actor-line" x1="60" y1="230" x2="75" y2="258"/>
+    <text class="actor-label" x="60" y="278">Applicant</text>
+  </g>
+  <text class="section-label" x="220" y="55">Applicant use cases</text>
+
+  <g id="uc-applicant">
+    <ellipse class="uc-ellipse" cx="500" cy="65" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="69">Register account</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="115" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="119">Register passport</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="165" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="169">Submit visa application</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="215" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="219">Upload supporting documents</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="265" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="269">Make visa fee payment</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="315" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="319">Track application status</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="365" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="369">View notifications</text>
+  </g>
+  <path class="assoc" d="M75,220 L340,65"/>
+  <path class="assoc" d="M75,225 L340,115"/>
+  <path class="assoc" d="M78,230 L340,165"/>
+  <path class="assoc" d="M78,235 L340,215"/>
+  <path class="assoc" d="M78,240 L340,265"/>
+  <path class="assoc" d="M78,245 L340,315"/>
+  <path class="assoc" d="M78,250 L340,365"/>
+
+  <!-- ============ VISA OFFICER ============ -->
+  <g id="actor-visa-officer">
+    <circle class="actor-line" cx="60" cy="480" r="14"/>
+    <line class="actor-line" x1="60" y1="494" x2="60" y2="535"/>
+    <line class="actor-line" x1="60" y1="510" x2="40" y2="527"/>
+    <line class="actor-line" x1="60" y1="510" x2="80" y2="527"/>
+    <line class="actor-line" x1="60" y1="535" x2="45" y2="563"/>
+    <line class="actor-line" x1="60" y1="535" x2="75" y2="563"/>
+    <text class="actor-label" x="60" y="583">Visa Officer</text>
+  </g>
+  <text class="section-label" x="220" y="415">Visa officer use cases</text>
+
+  <g id="uc-visa-officer">
+    <ellipse class="uc-ellipse" cx="500" cy="425" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="429">Review visa application</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="475" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="479">Request additional documents</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="525" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="529">Approve visa application</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="575" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="579">Reject visa application</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="625" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="629">Issue digital visa</text>
+  </g>
+  <path class="assoc" d="M78,530 L340,425"/>
+  <path class="assoc" d="M78,532 L340,475"/>
+  <path class="assoc" d="M80,534 L340,525"/>
+  <path class="assoc" d="M78,536 L340,575"/>
+  <path class="assoc" d="M78,538 L340,625"/>
+
+  <!-- ============ IMMIGRATION OFFICER ============ -->
+  <g id="actor-immigration-officer">
+    <circle class="actor-line" cx="60" cy="790" r="14"/>
+    <line class="actor-line" x1="60" y1="804" x2="60" y2="845"/>
+    <line class="actor-line" x1="60" y1="820" x2="40" y2="837"/>
+    <line class="actor-line" x1="60" y1="820" x2="80" y2="837"/>
+    <line class="actor-line" x1="60" y1="845" x2="45" y2="873"/>
+    <line class="actor-line" x1="60" y1="845" x2="75" y2="873"/>
+    <text class="actor-label" x="60" y="893">Immigration<tspan x="60" dy="14">Officer</tspan></text>
+  </g>
+  <text class="section-label" x="220" y="665">Immigration officer use cases</text>
+
+  <g id="uc-immigration-officer">
+    <ellipse class="uc-ellipse" cx="500" cy="675" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="679">Scan / lookup passport</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="725" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="729">Perform biometric verification</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="775" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="779">View risk assessment</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="825" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="829">Log entry / exit</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="875" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="879">Check watchlist</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="925" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="929">View overstay report</text>
+  </g>
+  <path class="assoc" d="M78,840 L340,675"/>
+  <path class="assoc" d="M78,842 L340,725"/>
+  <path class="assoc" d="M80,844 L340,775"/>
+  <path class="assoc" d="M80,846 L340,825"/>
+  <path class="assoc" d="M78,848 L340,875"/>
+  <path class="assoc" d="M78,850 L340,925"/>
+
+  <!-- ============ ADMIN ============ -->
+  <g id="actor-admin">
+    <circle class="actor-line" cx="60" cy="1100" r="14"/>
+    <line class="actor-line" x1="60" y1="1114" x2="60" y2="1155"/>
+    <line class="actor-line" x1="60" y1="1130" x2="40" y2="1147"/>
+    <line class="actor-line" x1="60" y1="1130" x2="80" y2="1147"/>
+    <line class="actor-line" x1="60" y1="1155" x2="45" y2="1183"/>
+    <line class="actor-line" x1="60" y1="1155" x2="75" y2="1183"/>
+    <text class="actor-label" x="60" y="1203">Admin</text>
+  </g>
+  <text class="section-label" x="220" y="975">Admin use cases</text>
+
+  <g id="uc-admin">
+    <ellipse class="uc-ellipse" cx="500" cy="985" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="989">Manage user accounts</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="1035" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="1039">Manage checkpoints</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="1085" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="1089">View system analytics</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="1135" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="1139">Generate reports</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="1185" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="1189">View audit log</text>
+
+    <ellipse class="uc-ellipse" cx="500" cy="1235" rx="160" ry="22"/>
+    <text class="uc-label" x="500" y="1239">Manage watchlist entries</text>
+  </g>
+  <path class="assoc" d="M78,1150 L340,985"/>
+  <path class="assoc" d="M78,1152 L340,1035"/>
+  <path class="assoc" d="M80,1154 L340,1085"/>
+  <path class="assoc" d="M80,1156 L340,1135"/>
+  <path class="assoc" d="M78,1158 L340,1185"/>
+  <path class="assoc" d="M78,1160 L340,1235"/>
+</svg>

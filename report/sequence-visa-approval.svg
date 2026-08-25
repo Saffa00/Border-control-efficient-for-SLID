@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 780" font-family="Inter, Arial, sans-serif">
+  <style>
+    .actor-box { fill: #DCE9EE; stroke: #0B4F6C; stroke-width: 1; }
+    .actor-label { font-size: 12px; font-weight: 600; fill: #1F2937; text-anchor: middle; }
+    .lifeline { stroke: #9CA3AF; stroke-width: 1; stroke-dasharray: 4 3; }
+    .activation { fill: #F3E3C8; stroke: #C98A2E; stroke-width: 1; }
+    .msg { stroke: #1F2937; stroke-width: 1.2; fill: none; }
+    .msg-return { stroke: #1F2937; stroke-width: 1; stroke-dasharray: 5 3; fill: none; }
+    .msg-label { font-size: 10.5px; fill: #1F2937; }
+    .note { fill: #FBF0E1; stroke: #C77B21; stroke-width: 0.75; }
+    .note-label { font-size: 9.5px; fill: #4B5563; font-style: italic; }
+    .title { font-size: 15px; font-weight: 600; fill: #0B4F6C; }
+    marker path { fill: #1F2937; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9Z"/>
+    </marker>
+  </defs>
+
+  <text class="title" x="450" y="24" text-anchor="middle">Sequence: Visa Application Approval</text>
+
+  <!-- Actor/lifeline headers -->
+  <g>
+    <rect class="actor-box" x="20" y="45" width="120" height="34" rx="6"/>
+    <text class="actor-label" x="80" y="66">Applicant</text>
+    <line class="lifeline" x1="80" y1="79" x2="80" y2="740"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="220" y="45" width="140" height="34" rx="6"/>
+    <text class="actor-label" x="290" y="66">React Frontend</text>
+    <line class="lifeline" x1="290" y1="79" x2="290" y2="740"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="440" y="45" width="140" height="34" rx="6"/>
+    <text class="actor-label" x="510" y="66">Supabase (DB + Storage)</text>
+    <line class="lifeline" x1="510" y1="79" x2="510" y2="740"/>
+  </g>
+  <g>
+    <rect class="actor-box" x="660" y="45" width="140" height="34" rx="6"/>
+    <text class="actor-label" x="730" y="66">Visa Officer</text>
+    <line class="lifeline" x1="730" y1="79" x2="730" y2="740"/>
+  </g>
+
+  <!-- 1. Applicant submits application -->
+  <rect class="activation" x="285" y="95" width="10" height="70"/>
+  <path class="msg" d="M80,100 L285,100" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="90" y="95">1: fill visa application wizard, submit</text>
+
+  <rect class="activation" x="505" y="110" width="10" height="45"/>
+  <path class="msg" d="M295,115 L505,115" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="300" y="110">2: insert visa_applications, upload docs to Storage</text>
+  <path class="msg-return" d="M505,150 L295,150" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="310" y="145">application_ref</text>
+
+  <path class="msg-return" d="M285,163 L80,163" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="90" y="178">3: show status = "submitted"</text>
+
+  <!-- 2. Visa officer reviews -->
+  <rect class="activation" x="725" y="200" width="10" height="60"/>
+  <path class="msg" d="M290,206 L725,206" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="330" y="200">4: application appears in review queue</text>
+
+  <rect class="activation" x="505" y="220" width="10" height="35"/>
+  <path class="msg" d="M725,225 L515,225" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="530" y="220">5: fetch application + signed doc URLs</text>
+  <path class="msg-return" d="M505,250 L725,250" marker-end="url(#arrow)"/>
+
+  <rect class="note" x="600" y="270" width="230" height="30" rx="4"/>
+  <text class="note-label" x="612" y="289">Officer reviews documents, purpose of travel</text>
+
+  <!-- 3. Approval -->
+  <rect class="activation" x="725" y="315" width="10" height="140"/>
+  <path class="msg" d="M725,325 L725,325" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="612" y="315">6: click "Approve &amp; issue visa"</text>
+
+  <rect class="activation" x="505" y="330" width="10" height="120"/>
+  <path class="msg" d="M725,340 L515,340" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="530" y="335">7: update visa_applications.status = 'approved'</text>
+
+  <path class="msg" d="M515,365 L515,365" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="530" y="365">8: insert digital_visas (visa_number, qr_code_token,</text>
+  <text class="msg-label" x="530" y="378">    expiry = issue_date + visa_types.validity_days)</text>
+
+  <path class="msg" d="M515,395 L515,395" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="530" y="395">9: insert application_status_history</text>
+
+  <path class="msg" d="M515,415 L515,415" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="530" y="415">10: insert notifications (applicant.user_id)</text>
+
+  <path class="msg-return" d="M505,445 L725,445" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="612" y="465">11: confirmation, return to queue</text>
+
+  <!-- 4. Applicant notified -->
+  <rect class="activation" x="285" y="500" width="10" height="45"/>
+  <path class="msg" d="M510,505 L295,505" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="330" y="500">12: notifications query returns new unread item</text>
+
+  <path class="msg-return" d="M285,538 L80,538" marker-end="url(#arrow)"/>
+  <text class="msg-label" x="90" y="558">13: applicant sees "Approved" stamp + visa details</text>
+
+  <rect class="note" x="80" y="580" width="500" height="30" rx="4"/>
+  <text class="note-label" x="92" y="599">Officer's confirmed decision is the recorded outcome — the system never auto-approves without this step</text>
+</svg>

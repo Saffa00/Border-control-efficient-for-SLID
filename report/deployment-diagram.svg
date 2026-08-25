@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 640" font-family="Inter, Arial, sans-serif">
+  <style>
+    .node-face { fill: #FFFFFF; stroke: #0B4F6C; stroke-width: 1.3; }
+    .node-top { fill: #DCE9EE; stroke: #0B4F6C; stroke-width: 1.3; }
+    .node-side { fill: #C7DCE4; stroke: #0B4F6C; stroke-width: 1.3; }
+    .node-title { font-size: 12px; font-weight: 700; fill: #1F2937; text-anchor: middle; }
+    .node-stereotype { font-size: 9.5px; fill: #4B5563; text-anchor: middle; font-style: italic; }
+    .artifact-box { fill: #F3E3C8; stroke: #C98A2E; stroke-width: 0.8; }
+    .artifact-label { font-size: 9.5px; fill: #1F2937; text-anchor: middle; }
+    .container-box { fill: #F7F5F0; stroke: #4B5563; stroke-width: 1; stroke-dasharray: 5 3; }
+    .container-title { font-size: 13px; font-weight: 700; fill: #0B4F6C; }
+    .conn { stroke: #4B5563; stroke-width: 1.2; fill: none; }
+    .conn-label { font-size: 9.5px; fill: #1F2937; }
+    .title { font-size: 16px; font-weight: 700; fill: #0B4F6C; text-anchor: middle; }
+  </style>
+  <defs>
+    <marker id="d1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M1 1L9 5L1 9Z" fill="#4B5563"/>
+    </marker>
+  </defs>
+
+  <text class="title" x="470" y="26">Deployment Diagram: SL Immigration Management System</text>
+
+  <!-- ============ Applicant browser node (3D box) ============ -->
+  <g id="node-applicant">
+    <polygon class="node-side" points="30,260 50,240 50,340 30,360"/>
+    <polygon class="node-top" points="30,260 50,240 190,240 170,260"/>
+    <rect class="node-face" x="30" y="260" width="140" height="100"/>
+    <text class="node-stereotype" x="100" y="278">&lt;&lt;device&gt;&gt;</text>
+    <text class="node-title" x="100" y="295">Applicant</text>
+    <text class="node-title" x="100" y="310">Browser</text>
+  </g>
+
+  <!-- ============ Officer browser/tablet node ============ -->
+  <g id="node-officer">
+    <polygon class="node-side" points="30,440 50,420 50,520 30,540"/>
+    <polygon class="node-top" points="30,440 50,420 190,420 170,440"/>
+    <rect class="node-face" x="30" y="440" width="140" height="100"/>
+    <text class="node-stereotype" x="100" y="458">&lt;&lt;device&gt;&gt;</text>
+    <text class="node-title" x="100" y="475">Officer</text>
+    <text class="node-title" x="100" y="490">Browser / Tablet</text>
+  </g>
+
+  <!-- ============ Static hosting node (React SPA) ============ -->
+  <g id="node-static">
+    <polygon class="node-side" points="270,90 290,70 290,210 270,230"/>
+    <polygon class="node-top" points="270,90 290,70 480,70 460,90"/>
+    <rect class="node-face" x="270" y="90" width="190" height="140"/>
+    <text class="node-stereotype" x="365" y="108">&lt;&lt;server&gt;&gt;</text>
+    <text class="node-title" x="365" y="125">Static Hosting</text>
+    <text class="artifact-label" x="365" y="140" font-style="italic">(Vercel / Netlify)</text>
+    <rect class="artifact-box" x="290" y="150" width="150" height="30" rx="3"/>
+    <text class="artifact-label" x="365" y="169">React SPA (Vite build)</text>
+    <text class="artifact-label" x="365" y="200">tailwind.config.js</text>
+    <text class="artifact-label" x="365" y="214">App.tsx routing</text>
+  </g>
+
+  <!-- ============ Application server node ============ -->
+  <g id="node-appserver">
+    <polygon class="node-side" points="270,350 290,330 290,510 270,530"/>
+    <polygon class="node-top" points="270,350 290,330 480,330 460,350"/>
+    <rect class="node-face" x="270" y="350" width="190" height="180"/>
+    <text class="node-stereotype" x="365" y="368">&lt;&lt;server&gt;&gt;</text>
+    <text class="node-title" x="365" y="385">Application Server</text>
+    <text class="artifact-label" x="365" y="399" font-style="italic">(Node.js / Express)</text>
+    <rect class="artifact-box" x="290" y="410" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="365" y="427">border-check.ts</text>
+    <rect class="artifact-box" x="290" y="442" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="365" y="459">admin-users.ts</text>
+    <rect class="artifact-box" x="290" y="474" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="365" y="491">Supabase service-role client</text>
+  </g>
+
+  <!-- ============ Supabase Cloud container ============ -->
+  <rect class="container-box" x="560" y="55" width="360" height="540" rx="10"/>
+  <text class="container-title" x="580" y="80">Supabase Cloud</text>
+
+  <g id="node-postgres">
+    <polygon class="node-side" points="595,110 615,90 615,240 595,260"/>
+    <polygon class="node-top" points="595,110 615,90 805,90 785,110"/>
+    <rect class="node-face" x="595" y="110" width="190" height="150"/>
+    <text class="node-stereotype" x="690" y="128">&lt;&lt;database&gt;&gt;</text>
+    <text class="node-title" x="690" y="145">Postgres</text>
+    <rect class="artifact-box" x="615" y="158" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="690" y="175">20 tables + RLS policies</text>
+    <rect class="artifact-box" x="615" y="190" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="690" y="207">calculate_risk_score()</text>
+    <rect class="artifact-box" x="615" y="222" width="150" height="26" rx="3"/>
+    <text class="artifact-label" x="690" y="239">overstaying_travelers view</text>
+  </g>
+
+  <g id="node-auth">
+    <polygon class="node-side" points="595,300 615,280 615,360 595,380"/>
+    <polygon class="node-top" points="595,300 615,280 805,280 785,300"/>
+    <rect class="node-face" x="595" y="300" width="190" height="80"/>
+    <text class="node-stereotype" x="690" y="318">&lt;&lt;service&gt;&gt;</text>
+    <text class="node-title" x="690" y="335">Supabase Auth</text>
+    <text class="artifact-label" x="690" y="352">JWT sessions, invites</text>
+  </g>
+
+  <g id="node-storage">
+    <polygon class="node-side" points="595,420 615,400 615,500 595,520"/>
+    <polygon class="node-top" points="595,420 615,400 805,400 785,420"/>
+    <rect class="node-face" x="595" y="420" width="190" height="100"/>
+    <text class="node-stereotype" x="690" y="438">&lt;&lt;service&gt;&gt;</text>
+    <text class="node-title" x="690" y="455">Supabase Storage</text>
+    <text class="artifact-label" x="690" y="472">visa-documents bucket</text>
+    <text class="artifact-label" x="690" y="486">(1-hr signed URLs)</text>
+  </g>
+
+  <!-- ============ Connections ============ -->
+  <!-- Applicant to static hosting -->
+  <path class="conn" d="M170,290 L270,180" marker-end="url(#d1)"/>
+  <text class="conn-label" x="178" y="225">HTTPS (load app)</text>
+
+  <!-- Officer to static hosting -->
+  <path class="conn" d="M170,460 L270,190" marker-end="url(#d1)"/>
+  <text class="conn-label" x="185" y="345">HTTPS (load app)</text>
+
+  <!-- Applicant to Supabase (direct, anon key + RLS) -->
+  <path class="conn" d="M170,310 L595,190" marker-end="url(#d1)"/>
+  <text class="conn-label" x="330" y="240">HTTPS / anon key (RLS-scoped CRUD)</text>
+
+  <!-- Officer to Supabase (direct reads) -->
+  <path class="conn" d="M170,470 L595,320" marker-end="url(#d1)"/>
+  <text class="conn-label" x="330" y="420">HTTPS / anon key (reads: watchlist, checkpoints...)</text>
+
+  <!-- Officer to application server -->
+  <path class="conn" d="M170,500 L270,440" marker-end="url(#d1)"/>
+  <text class="conn-label" x="178" y="500">HTTPS (privileged writes:</text>
+  <text class="conn-label" x="178" y="513">assess / finalize / invite-staff)</text>
+
+  <!-- Application server to Supabase (service role) -->
+  <path class="conn" d="M460,440 L595,440" marker-end="url(#d1)"/>
+  <text class="conn-label" x="470" y="433">service-role key (bypasses RLS)</text>
+
+  <!-- Application server also writes docs? Storage connection from static/browser -->
+  <path class="conn" d="M170,300 L595,470" marker-end="url(#d1)"/>
+  <text class="conn-label" x="330" y="500">HTTPS (document upload/signed URLs)</text>
+</svg>
