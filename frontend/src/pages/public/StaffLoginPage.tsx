@@ -66,9 +66,24 @@ export default function StaffLoginPage() {
       });
 
       if (authError) {
+        // Check if there is a pending or approved request in staff_access_requests
+        const { data: reqData } = await supabase
+          .from("staff_access_requests")
+          .select("status, full_name")
+          .eq("email", targetEmail)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (reqData && reqData.status === "pending") {
+          throw new Error(
+            `⏳ Application Under Review: The staff request for "${reqData.full_name}" is currently awaiting approval by the Administrator. Once approved in the Admin Console, your official login credentials will be emailed to you.`
+          );
+        }
+
         if (authError.message === "Invalid login credentials") {
           throw new Error(
-            "Invalid official email/username or temporary password. Please check your spelling or copy the exact password."
+            "Invalid official email/username or temporary password. Please verify spelling, or contact Administrator if your application was just approved."
           );
         }
         if (authError.message.includes("Email not confirmed")) {
