@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
+import { OfficerNavbar } from "../../components/OfficerNavbar";
 
 interface WatchlistEntry {
   watchlist_id: string;
@@ -58,17 +59,18 @@ export default function WatchlistPage() {
   }, [search]);
 
   async function handleAddEntry() {
-    setError(null);
     if (!form.passportNumber || !form.reason) {
       setError("Passport number and reason are required.");
       return;
     }
+
     setSubmitting(true);
+    setError(null);
 
     const { error: insertError } = await supabase.from("watchlist").insert({
-      passport_number: form.passportNumber,
-      full_name: form.fullName || null,
-      reason: form.reason,
+      passport_number: form.passportNumber.trim().toUpperCase(),
+      full_name: form.fullName.trim() || null,
+      reason: form.reason.trim(),
       risk_level: form.riskLevel,
       added_by: profile?.user_id,
     });
@@ -87,12 +89,7 @@ export default function WatchlistPage() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink font-body">
-      <header className="border-b border-primary-light px-8 py-6 bg-white">
-        <p className="font-mono text-xs tracking-widest text-primary uppercase mb-1">
-          Sierra Leone Immigration Department
-        </p>
-        <h1 className="font-display text-2xl">Watchlist</h1>
-      </header>
+      <OfficerNavbar title="National Security Watchlist Console" />
 
       <main className="max-w-4xl mx-auto px-8 py-10 grid gap-6">
         <div className="flex items-center justify-between gap-4">

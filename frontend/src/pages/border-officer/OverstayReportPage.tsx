@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
+import { OfficerNavbar } from "../../components/OfficerNavbar";
 
 interface OverstayRow {
   passport_id: string;
@@ -49,12 +50,7 @@ export default function OverstayReportPage() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink font-body">
-      <header className="border-b border-primary-light px-8 py-6 bg-white">
-        <p className="font-mono text-xs tracking-widest text-primary uppercase mb-1">
-          Sierra Leone Immigration Department
-        </p>
-        <h1 className="font-display text-2xl">Overstay report</h1>
-      </header>
+      <OfficerNavbar title="Overstay Enforcement Console" />
 
       <main className="max-w-4xl mx-auto px-8 py-10 grid gap-6">
         <div className="flex items-center justify-between gap-4">

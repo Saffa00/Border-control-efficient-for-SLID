@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
+import { OfficerNavbar } from "../../components/OfficerNavbar";
 
 interface Checkpoint {
   checkpoint_id: string;
@@ -40,51 +41,60 @@ export default function BorderCheckInPage() {
 
   const [passportId, setPassportId] = useState<string | null>(null);
   const [travelerName, setTravelerName] = useState<string | null>(null);
+  const [assessing, setAssessing] = useState(false);
   const [assessment, setAssessment] = useState<AssessResult | null>(null);
   const [finalDecision, setFinalDecision] = useState<"cleared" | "secondary_screening" | "refused" | null>(null);
-
-  const [assessing, setAssessing] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase
-      .from("checkpoints")
-      .select("checkpoint_id, name")
-      .then(({ data }) => setCheckpoints(data ?? []));
+    async function loadCheckpoints() {
+      const { data } = await supabase
+        .from("checkpoints")
+        .select("checkpoint_id, name")
+        .eq("is_active", true)
+        .order("name");
+      setCheckpoints(data ?? []);
+      if (data && data.length > 0) setCheckpointId(data[0].checkpoint_id);
+    }
+    loadCheckpoints();
   }, []);
 
-  async function getAuthHeaders() {
-    const { data: { session } } = await supabase.auth.getSession();
+  async function getAuthHeaders(): Promise<HeadersInit> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return {
       "Content-Type": "application/json",
-      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
     };
   }
 
-  async function lookupAndAssess() {
+  async function handleLookupAndAssess(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passportNumber.trim()) return;
+
     setError(null);
+    setAssessing(true);
     setAssessment(null);
-    setFinalDecision(null);
     setConfirmed(false);
 
-    if (!passportNumber || !checkpointId) {
-      setError("Enter a passport number and select a checkpoint.");
+    // 1. Fetch passport record
+    const { data: passport, error: pError } = await supabase
+      .from("passports")
+      .select("passport_id, status, users(full_name)")
+      .eq("passport_number", passportNumber.trim().toUpperCase())
+      .single();
+
+    if (pError || !passport) {
+      setError("Passport not found in the national registry.");
+      setAssessing(false);
       return;
     }
 
-    setAssessing(true);
-
-    // 1. Look up the passport
-    const { data: passport, error: lookupError } = await supabase
-      .from("passports")
-      .select("passport_id, users(full_name)")
-      .eq("passport_number", passportNumber)
-      .maybeSingle();
-
-    if (lookupError || !passport) {
-      setError("No passport found with that number.");
+    if (passport.status !== "active") {
+      setError(`Passport is ${passport.status} — not eligible for border processing.`);
       setAssessing(false);
       return;
     }
@@ -100,8 +110,18 @@ export default function BorderCheckInPage() {
         headers,
         body: JSON.stringify({ passportId: passport.passport_id, officerId: profile?.user_id }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Assessment failed");
+
+      let data: any = null;
+      try {
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { error: text };
+        }
+      } catch {}
+
+      if (!res.ok) throw new Error(data?.error ?? "Assessment failed");
 
       setAssessment(data);
       setFinalDecision(data.recommendation); // pre-fill with recommendation, officer can override
@@ -134,8 +154,18 @@ export default function BorderCheckInPage() {
           decision: finalDecision,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not record decision");
+
+      let data: any = null;
+      try {
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { error: text };
+        }
+      } catch {}
+
+      if (!res.ok) throw new Error(data?.error ?? "Could not record decision");
 
       setConfirmed(true);
     } catch (e: any) {
@@ -157,61 +187,59 @@ export default function BorderCheckInPage() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink font-body">
-      <header className="border-b border-primary-light px-8 py-6 bg-white">
-        <p className="font-mono text-xs tracking-widest text-primary uppercase mb-1">
-          Sierra Leone Immigration Department — Border Officer
-        </p>
-        <h1 className="font-display text-2xl">Traveler check-in</h1>
-      </header>
+      <OfficerNavbar title="Traveler Border Check-in Console" />
 
       <main className="max-w-2xl mx-auto px-8 py-10 grid gap-6">
         {/* Lookup form */}
         <SecurityPaperPanel className="p-6">
           <h2 className="font-display text-lg mb-4">1. Scan or enter passport</h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1.5">Passport number</label>
-              <input
-                className="w-full border border-primary-light rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                value={passportNumber}
-                onChange={(e) => setPassportNumber(e.target.value)}
-                placeholder="e.g. SL0123456"
-              />
+          <form onSubmit={handleLookupAndAssess}>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium mb-1.5">Passport number</label>
+                <input
+                  className="w-full border border-primary-light rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  value={passportNumber}
+                  onChange={(e) => setPassportNumber(e.target.value)}
+                  placeholder="e.g. SL0123456"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Checkpoint</label>
+                <select
+                  className="w-full border border-primary-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  value={checkpointId}
+                  onChange={(e) => setCheckpointId(e.target.value)}
+                >
+                  <option value="">Select...</option>
+                  {checkpoints.map((c) => (
+                    <option key={c.checkpoint_id} value={c.checkpoint_id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Direction</label>
+                <select
+                  className="w-full border border-primary-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  value={movementType}
+                  onChange={(e) => setMovementType(e.target.value as "entry" | "exit")}
+                >
+                  <option value="entry">Entry</option>
+                  <option value="exit">Exit</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Checkpoint</label>
-              <select
-                className="w-full border border-primary-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                value={checkpointId}
-                onChange={(e) => setCheckpointId(e.target.value)}
-              >
-                <option value="">Select...</option>
-                {checkpoints.map((c) => (
-                  <option key={c.checkpoint_id} value={c.checkpoint_id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Direction</label>
-              <select
-                className="w-full border border-primary-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                value={movementType}
-                onChange={(e) => setMovementType(e.target.value as "entry" | "exit")}
-              >
-                <option value="entry">Entry</option>
-                <option value="exit">Exit</option>
-              </select>
-            </div>
-          </div>
-          <button
-            onClick={lookupAndAssess}
-            disabled={assessing}
-            className="bg-primary text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-primary-dark disabled:opacity-40 transition"
-          >
-            {assessing ? "Running checks..." : "Run check"}
-          </button>
+            <button
+              type="submit"
+              disabled={assessing}
+              className="bg-primary text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-primary-dark disabled:opacity-40 transition cursor-pointer shadow-xs"
+            >
+              {assessing ? "Running checks..." : "Run check"}
+            </button>
+          </form>
           {error && <p className="text-status-rejected text-sm mt-3">{error}</p>}
         </SecurityPaperPanel>
 
