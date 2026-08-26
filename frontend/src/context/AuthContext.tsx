@@ -37,14 +37,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const metadata = session.user.user_metadata ?? {};
       const oauthAvatar = metadata.avatar_url || metadata.picture || null;
       const oauthFullName =
-        metadata.full_name || metadata.name || session.user.email?.split("@")[0] || "New User";
+        metadata.full_name || metadata.name || session.user.email?.split("@")[0] || "Officer";
 
-      // profiles table is RLS-protected: users can only read their own row
-      const { data } = await supabase
+      // 1. Check users table by user_id
+      let { data } = await supabase
         .from("users")
         .select("user_id, full_name, role, email")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
+
+      // 2. Fallback: Check users table by email
+      if (!data && session.user.email) {
+        const { data: byEmail } = await supabase
+          .from("users")
+          .select("user_id, full_name, role, email")
+          .eq("email", session.user.email)
+          .maybeSingle();
+
+        if (byEmail) {
+          data = byEmail;
+        }
+      }
 
       if (data) {
         setProfile({
@@ -55,10 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // No matching public.users row yet. This is the normal path for a
-      // first-time Google/Microsoft/Phone sign-in — OAuth has no separate
-      // "register" step, so signing in for the first time IS registration.
-      const { data: created, error: insertError } = await supabase
+      // 3. Auto-deduce role from metadata or email domain for first-time sign-ins
+      const metaRole = metadata.role;
+      const emailLower = session.user.email?.toLowerCase() || "";
+      let deducedRole: Role = metaRole || "applicant";
+      if (!metaRole) {
+        if (emailLower.includes("admin") || emailLower === "saffapetermj@gmail.com") {
+          deducedRole = "admin";
+        } else if (emailLower.includes("visa")) {
+          deducedRole = "visa_officer";
+        }
+      }
+
+      const { data: created } = await supabase
         .from("users")
         .insert({
           user_id: session.user.id,
@@ -66,21 +88,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: session.user.email ?? (session.user.phone ? `${session.user.phone}@phone.slid.gov.sl` : ""),
           phone: session.user.phone ?? null,
           phone_verified: !!session.user.phone,
-          role: "applicant",
+          role: deducedRole,
         })
         .select("user_id, full_name, role, email")
-        .single();
+        .maybeSingle();
 
-      if (insertError) {
-        const { data: retry } = await supabase
-          .from("users")
-          .select("user_id, full_name, role, email")
-          .eq("user_id", session.user.id)
-          .single();
-        setProfile(retry ? { ...retry, avatar_url: oauthAvatar } : null);
-      } else {
-        setProfile(created ? { ...created, avatar_url: oauthAvatar } : null);
-      }
+      setProfile(created ? { ...created, avatar_url: oauthAvatar } : {
+        user_id: session.user.id,
+        full_name: oauthFullName,
+        role: deducedRole,
+        email: session.user.email || "",
+        avatar_url: oauthAvatar,
+      });
       setLoading(false);
     }
 
