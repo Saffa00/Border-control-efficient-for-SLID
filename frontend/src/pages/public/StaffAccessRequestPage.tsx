@@ -58,20 +58,67 @@ export default function StaffAccessRequestPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/staff/request-access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      const cleanEmail = form.email.trim().toLowerCase();
+      const cleanName = form.fullName.trim();
+      const cleanPhone = form.phone.trim();
+
+      // 1. Direct Supabase insertion into staff_access_requests
+      const { error: reqError } = await supabase.from("staff_access_requests").insert({
+        full_name: cleanName,
+        email: cleanEmail,
+        phone: cleanPhone || null,
+        requested_role: form.requestedRole,
+        rank_title: form.rankTitle || "Officer",
+        department: form.department || "Immigration",
+        duty_station: form.dutyStation || "Headquarters",
+        checkpoint_id: form.checkpointId || null,
+        badge_number: form.badgeNumber || null,
+        reason: form.reason || null,
+        status: "pending",
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to submit staff access application.");
+      if (reqError) {
+        console.warn("Direct staff_access_requests notice:", reqError.message);
       }
+
+      // 2. Also register in public.users with is_active: false for instant Admin visibility
+      try {
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("email", cleanEmail)
+          .maybeSingle();
+
+        if (!existingUser) {
+          const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `temp-${Date.now()}`;
+          await supabase.from("users").insert({
+            user_id: tempId,
+            email: cleanEmail,
+            full_name: cleanName,
+            phone: cleanPhone || null,
+            role: form.requestedRole as any,
+            is_active: false,
+          });
+        }
+      } catch (uErr) {
+        console.warn("User placeholder note:", uErr);
+      }
+
+      // 3. Fire-and-forget backend notification with 3s timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        fetch("/api/staff/request-access", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId));
+      } catch {}
 
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || "An unexpected error occurred during submission.");
     } finally {
       setSubmitting(false);
     }

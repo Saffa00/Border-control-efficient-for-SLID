@@ -74,15 +74,16 @@ export default function LoginPage() {
       return;
     }
 
-    // STRICT ROLE SEPARATION: Applicant portal only accepts 'applicant'
+    // If user is an official staff member, seamlessly navigate to their staff portal
     if (userRow && userRow.role !== "applicant") {
-      setError(
-        `Access Restricted: This email (${userRow.email}) is registered as an Official ${userRow.role
-          .replace("_", " ")
-          .toUpperCase()} account. One email cannot be used across multiple portals.`
-      );
-      await supabase.auth.signOut();
       setLoading(false);
+      if (userRow.role === "admin") {
+        navigate("/admin");
+      } else if (userRow.role === "visa_officer") {
+        navigate("/visa-officer");
+      } else {
+        navigate("/border/check-in");
+      }
       return;
     }
 

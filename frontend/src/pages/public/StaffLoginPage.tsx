@@ -48,13 +48,16 @@ export default function StaffLoginPage() {
 
       // If user typed a username without @ (e.g. lucysaffa89742026), resolve their email
       if (!targetEmail.includes("@")) {
-        // 1. Try Backend Username Resolver API
+        // 1. Try Backend Username Resolver API with 2s timeout
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
           const res = await fetch("/api/auth/resolve-username", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: cleanIdentifier }),
-          });
+            signal: controller.signal,
+          }).finally(() => clearTimeout(timeoutId));
           const text = await res.text();
           try {
             const data = JSON.parse(text);
