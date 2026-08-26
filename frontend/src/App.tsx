@@ -53,6 +53,7 @@ import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { PWAOfflineBanner } from "./components/PWAOfflineBanner";
 import { MobileAppBottomNav } from "./components/MobileAppBottomNav";
 import { MobileBackButton } from "./components/MobileBackButton";
+import { ForcedPasswordChangeModal } from "./components/ForcedPasswordChangeModal";
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
         <PWAOfflineBanner />
         <PWAInstallPrompt />
         <LiveNotificationToast />
+        <ForcedPasswordChangeModal />
         <ApplicantAiChatbot />
         <MobileBackButton />
         <MobileAppBottomNav />

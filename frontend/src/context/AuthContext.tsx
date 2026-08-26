@@ -14,6 +14,8 @@ interface Profile {
 interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
+  isTemporaryPassword: boolean;
+  setTemporaryPasswordFlag: (val: boolean) => void;
   signOut: () => Promise<void>;
   updateAvatar: (avatarUrl: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -24,6 +26,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTemporaryPassword, setIsTemporaryPassword] = useState(false);
+
+  function setTemporaryPasswordFlag(val: boolean) {
+    setIsTemporaryPassword(val);
+    if (!val) {
+      sessionStorage.removeItem("slid_temporary_password");
+    }
+  }
 
   useEffect(() => {
     async function loadProfile() {
@@ -31,10 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!session) {
         setProfile(null);
         setLoading(false);
+        setIsTemporaryPassword(false);
         return;
       }
 
       const metadata = session.user.user_metadata ?? {};
+      const isTemp =
+        metadata.temporary_password === true ||
+        sessionStorage.getItem("slid_temporary_password") === "true";
+      setIsTemporaryPassword(isTemp);
+
       const oauthAvatar = metadata.avatar_url || metadata.picture || null;
       const oauthFullName =
         metadata.full_name || metadata.name || session.user.email?.split("@")[0] || "Officer";
@@ -185,7 +201,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ profile, loading, signOut, updateAvatar, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        profile,
+        loading,
+        isTemporaryPassword,
+        setTemporaryPasswordFlag,
+        signOut,
+        updateAvatar,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
