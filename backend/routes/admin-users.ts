@@ -17,6 +17,7 @@ import {
   staffAccountApprovedEmail,
   staffAccountRejectedEmail,
   staffWelcomeCredentialsEmail,
+  passwordResetEmail,
 } from "../lib/emailService";
 
 const router = Router();
@@ -802,12 +803,12 @@ router.post("/api/admin/users/:userId/send-credentials", requireAdmin, async (re
 
     if (updateAuthError) throw updateAuthError;
 
-    // Send the official credentials email via Resend
-    const loginUrl = `${req.headers.origin || "http://localhost:5173"}/staff/login`;
+    // Send the official credentials email via Gmail SMTP / Resend
+    const loginUrl = "https://border-control-efficient-for-slid.vercel.app/staff/login";
     const emailHtml = staffWelcomeCredentialsEmail(
       targetUser.full_name,
-      generatedUsername,
       targetUser.email,
+      generatedUsername,
       newTempPassword,
       targetUser.role,
       loginUrl
@@ -858,112 +859,56 @@ router.put("/api/admin/users/:userId", requireAdmin, async (req: AuthenticatedRe
     dutyStation,
     checkpointId,
   } = req.body;
-  const requestingUserId = (req.user?.id || req.profile?.user_id) as string;
 
   try {
-    const userUpdates: Record<string, unknown> = {};
-    if (fullName !== undefined) userUpdates.full_name = fullName.trim();
-    if (role !== undefined) userUpdates.role = role;
-    if (isActive !== undefined) userUpdates.is_active = isActive;
-    if (phone !== undefined) userUpdates.phone = phone.trim() || null;
+    const { error: userError } = await supabaseAdmin
+      .from("users")
+      .update({
+        full_name: fullName,
+        role,
+        is_active: isActive,
+        phone: phone || null,
+      })
+      .eq("user_id", userId);
 
-    if (Object.keys(userUpdates).length > 0) {
-      const { error } = await supabaseAdmin.from("users").update(userUpdates).eq("user_id", userId);
-      if (error) throw error;
-    }
+    if (userError) throw userError;
 
-    // Update staff profile if relevant
-    if (rankTitle !== undefined || department !== undefined || dutyStation !== undefined || checkpointId !== undefined) {
-      const { data: existingStaff } = await supabaseAdmin
+    if (role !== "applicant") {
+      const { error: staffError } = await supabaseAdmin
         .from("staff_profiles")
-        .select("staff_profile_id")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (existingStaff) {
-        await supabaseAdmin
-          .from("staff_profiles")
-          .update({
-            rank_title: rankTitle || "Officer",
-            department: department || "Immigration",
-            duty_station: dutyStation || "Unassigned",
-            checkpoint_id: checkpointId || null,
-          })
-          .eq("user_id", userId);
-      } else if (role !== "applicant") {
-        await supabaseAdmin.from("staff_profiles").insert({
-          user_id: userId,
-          staff_id_code: `SLID-${Date.now().toString(36).toUpperCase()}`,
-          rank_title: rankTitle || "Officer",
-          department: department || "Immigration",
-          duty_station: dutyStation || "Unassigned",
-          issue_date: new Date().toISOString().slice(0, 10),
-          expiry_date: new Date(new Date().setFullYear(new Date().getFullYear() + 3))
-            .toISOString()
-            .slice(0, 10),
-          status: "Active",
+        .update({
+          rank_title: rankTitle || null,
+          department: department || null,
+          duty_station: dutyStation || null,
           checkpoint_id: checkpointId || null,
-        });
-      }
+        })
+        .eq("user_id", userId);
+
+      if (staffError) throw staffError;
     }
 
-    await supabaseAdmin.from("admin_audit_log").insert({
-      actor_user_id: requestingUserId,
-      action: "user_updated_by_admin",
-      target_type: "users",
-      target_id: userId,
-      details: JSON.stringify({ fullName, role, isActive, phone, dutyStation }),
-    });
-
-    return res.json({ success: true });
+    return res.json({ success: true, message: "User updated successfully" });
   } catch (err: any) {
     console.error("update user failed:", err);
-    return res.status(500).json({ error: err.message ?? "Internal error updating user" });
+    return res.status(500).json({ error: err.message ?? "Internal error" });
   }
 });
 
 // ---------------------------------------------------------------
-// DELETE /api/admin/users/:userId (Delete User)
+// DELETE /api/admin/users/:userId
 // ---------------------------------------------------------------
 router.delete("/api/admin/users/:userId", requireAdmin, async (req: AuthenticatedRequest, res) => {
   const userId = req.params.userId as string;
-  const requestingUserId = (req.user?.id || req.profile?.user_id) as string;
-
-  // Prevent self-deletion
-  if (userId === requestingUserId) {
-    return res.status(400).json({ error: "You cannot delete your own admin account." });
-  }
 
   try {
-    // Get user info for audit log before deletion
-    const { data: targetUser } = await supabaseAdmin
-      .from("users")
-      .select("email, full_name, role")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    // 1. Delete from public.users & cascade tables
     await supabaseAdmin.from("staff_profiles").delete().eq("user_id", userId);
     await supabaseAdmin.from("users").delete().eq("user_id", userId);
+    await supabaseAdmin.auth.admin.deleteUser(userId);
 
-    // 2. Delete from auth.users
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (authDeleteError) {
-      console.warn("auth.admin.deleteUser note:", authDeleteError.message);
-    }
-
-    await supabaseAdmin.from("admin_audit_log").insert({
-      actor_user_id: requestingUserId,
-      action: "user_deleted_by_admin",
-      target_type: "users",
-      target_id: userId,
-      details: `Deleted ${targetUser?.role || "user"}: ${targetUser?.email || userId} (${targetUser?.full_name || ""})`,
-    });
-
-    return res.json({ success: true, message: "User deleted successfully" });
+    return res.json({ success: true, message: "User account deleted successfully" });
   } catch (err: any) {
     console.error("delete user failed:", err);
-    return res.status(500).json({ error: err.message ?? "Internal error deleting user" });
+    return res.status(500).json({ error: err.message ?? "Internal error" });
   }
 });
 
@@ -977,7 +922,7 @@ router.post("/api/admin/users/:userId/send-reset-link", requireAdmin, async (req
   try {
     const { data: targetUser } = await supabaseAdmin
       .from("users")
-      .select("email")
+      .select("full_name, email")
       .eq("user_id", userId)
       .single();
 
@@ -985,21 +930,31 @@ router.post("/api/admin/users/:userId/send-reset-link", requireAdmin, async (req
       return res.status(404).json({ error: "User email not found" });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+    const resetRedirect = "https://border-control-efficient-for-slid.vercel.app/reset-password";
+    const { data: linkData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: targetUser.email,
-      options: { redirectTo: `${frontendUrl}/reset-password` },
+      options: { redirectTo: resetRedirect },
     });
 
     if (resetError) throw resetError;
+
+    const actionLink = linkData?.properties?.action_link;
+    if (actionLink) {
+      await sendEmail({
+        userId,
+        to: targetUser.email,
+        subject: "🔒 Reset Your Account Password — Sierra Leone Immigration Department",
+        html: passwordResetEmail(targetUser.full_name || "Staff Member", actionLink),
+      });
+    }
 
     await supabaseAdmin.from("admin_audit_log").insert({
       actor_user_id: requestingUserId,
       action: "admin_password_reset_sent",
       target_type: "users",
       target_id: userId,
-      details: `Password reset dispatched to ${targetUser.email}`,
+      details: `Password reset email dispatched to ${targetUser.email}`,
     });
 
     return res.json({ success: true, message: `Password reset link sent to ${targetUser.email}` });

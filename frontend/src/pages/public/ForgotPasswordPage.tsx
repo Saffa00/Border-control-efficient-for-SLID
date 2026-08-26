@@ -26,9 +26,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/reset-password`;
+      const redirectUrl = "https://border-control-efficient-for-slid.vercel.app/reset-password";
+      let dispatched = false;
 
-      // 1. Dispatch via SLID backend for official crest logo & branded government layout
+      // 1. Dispatch via SLID backend for official crest logo & direct Gmail SMTP
       try {
         const res = await fetch("/api/auth/request-password-reset", {
           method: "POST",
@@ -36,26 +37,32 @@ export default function ForgotPasswordPage() {
           body: JSON.stringify({ email: cleanEmail, redirectUrl }),
         });
 
-        if (res.ok) {
-          setSent(true);
-          return;
-        }
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          if (res.ok && data.success) {
+            dispatched = true;
+          }
+        } catch {}
       } catch (backendErr) {
-        console.warn("Backend reset endpoint unavailable, using direct Supabase auth fallback:", backendErr);
+        console.warn("Backend reset notice:", backendErr);
       }
 
-      // 2. Direct Supabase Auth Fallback
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: redirectUrl,
-      });
-
-      if (resetError) {
-        throw resetError;
+      // 2. Fallback: Supabase Client Reset Request
+      if (!dispatched) {
+        try {
+          await supabase.auth.resetPasswordForEmail(cleanEmail, {
+            redirectTo: redirectUrl,
+          });
+        } catch (supabaseErr) {
+          console.warn("Supabase auth reset note:", supabaseErr);
+        }
       }
 
+      // Show confirmed dispatched screen
       setSent(true);
     } catch (err: any) {
-      setError(err.message || "Failed to send password reset email. Please try again.");
+      setError(err.message || "Failed to process recovery request. Please try again.");
     } finally {
       setLoading(false);
     }

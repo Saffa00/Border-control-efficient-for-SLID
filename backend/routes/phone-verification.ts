@@ -218,7 +218,7 @@ router.post("/api/auth/request-password-reset", async (req, res) => {
     const emailResult = await sendEmail({
       to: cleanEmail,
       subject: "🔒 Reset Your Account Password — Sierra Leone Immigration Department",
-      html: passwordResetEmail(actionLink, userProfile?.full_name),
+      html: passwordResetEmail(userProfile?.full_name || "Valued User", actionLink),
     });
 
     if (!emailResult.success) {
