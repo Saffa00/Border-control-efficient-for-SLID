@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Bell, ShieldAlert, FileText, UserPlus, CheckCircle2, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { Bell, ShieldAlert, FileText, UserPlus, ChevronRight, Volume2, VolumeX, Smartphone } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -24,8 +24,14 @@ export function NotificationBellMenu() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Play subtle chime sound on new notification
-  function playChime() {
+  // Play subtle chime sound and vibrate mobile phone
+  function playChimeAndVibrate() {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate([200, 100, 200]);
+      } catch {}
+    }
+
     if (!soundEnabled) return;
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -34,15 +40,13 @@ export function NotificationBellMenu() {
       osc.type = "sine";
       osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
       osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15); // A5
-      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.35);
-    } catch {
-      // AudioContext unavailable or blocked by browser policy
-    }
+    } catch {}
   }
 
   // Send real phone / device notification
@@ -54,7 +58,7 @@ export function NotificationBellMenu() {
             body,
             icon: "/slid-logo.png",
             badge: "/slid-logo.png",
-            tag: "slid-live-alert",
+            tag: `slid-alert-${Date.now()}`,
           });
           if (link) {
             n.onclick = () => {
@@ -67,7 +71,7 @@ export function NotificationBellMenu() {
         }
       }
     }
-    playChime();
+    playChimeAndVibrate();
   }
 
   function addNotification(item: Omit<NotificationItem, "id" | "timestamp" | "read">) {
@@ -78,16 +82,20 @@ export function NotificationBellMenu() {
       read: false,
     };
 
-    setNotifications((prev) => [newItem, ...prev.slice(0, 19)]);
+    setNotifications((prev) => [newItem, ...prev.filter((p) => p.title !== item.title).slice(0, 19)]);
     sendDeviceNotification(item.title, item.message, item.link);
   }
 
   async function requestPushPermission() {
     if (typeof window !== "undefined" && "Notification" in window) {
-      const res = await Notification.requestPermission();
-      setPermission(res);
-      if (res === "granted") {
-        sendDeviceNotification("SLID Alerts Enabled", "You will receive real-time notifications on your device.");
+      try {
+        const res = await Notification.requestPermission();
+        setPermission(res);
+        if (res === "granted") {
+          sendDeviceNotification("SLID Alerts Activated", "Real-time officer & application alerts will now show on your phone.");
+        }
+      } catch (err) {
+        console.warn("Push permission request notice:", err);
       }
     }
   }
@@ -102,49 +110,107 @@ export function NotificationBellMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Fetch initial notifications immediately on mount
   useEffect(() => {
     if (!profile?.user_id) return;
 
-    // 1. Initial greeting notification
-    setNotifications([
-      {
-        id: "welcome-system",
-        title: "SLID System Active",
-        message: `Welcome, ${profile.full_name}. Real-time monitoring and security alerts are online.`,
+    async function loadInitialAlerts() {
+      const initialList: NotificationItem[] = [];
+
+      // If Admin, query recent pending staff requests and visa applications
+      if (profile?.role === "admin") {
+        try {
+          // 1. Pending Staff Requests
+          const { data: staffReqs } = await supabase
+            .from("staff_access_requests")
+            .select("request_id, full_name, requested_role, created_at, status")
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(5);
+
+          if (staffReqs && staffReqs.length > 0) {
+            for (const r of staffReqs) {
+              initialList.push({
+                id: `req-${r.request_id}`,
+                title: "Pending Staff Application",
+                message: `${r.full_name} applied for ${r.requested_role?.replace("_", " ")}. Click to review and approve.`,
+                link: "/admin/users",
+                type: "staff",
+                timestamp: new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                read: false,
+              });
+            }
+          }
+
+          // 2. Pending Inactive Users
+          const { data: inactiveUsers } = await supabase
+            .from("users")
+            .select("user_id, full_name, role, created_at")
+            .eq("is_active", false)
+            .neq("role", "applicant")
+            .limit(5);
+
+          if (inactiveUsers && inactiveUsers.length > 0) {
+            for (const u of inactiveUsers) {
+              if (!initialList.some((n) => n.message.includes(u.full_name))) {
+                initialList.push({
+                  id: `user-${u.user_id}`,
+                  title: "Staff Clearance Required",
+                  message: `${u.full_name} registered as ${u.role?.replace("_", " ")}. Awaiting clearance.`,
+                  link: "/admin/users",
+                  type: "staff",
+                  timestamp: new Date(u.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  read: false,
+                });
+              }
+            }
+          }
+
+          // 3. Recent Visa Applications
+          const { data: visas } = await supabase
+            .from("visa_applications")
+            .select("application_ref, visa_type, created_at")
+            .order("created_at", { ascending: false })
+            .limit(3);
+
+          if (visas && visas.length > 0) {
+            for (const v of visas) {
+              initialList.push({
+                id: `visa-${v.application_ref}`,
+                title: "Visa Application Received",
+                message: `Ref: ${v.application_ref} (${v.visa_type}) submitted for adjudication.`,
+                link: "/visa-officer",
+                type: "visa",
+                timestamp: new Date(v.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                read: true,
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("Initial alerts load notice:", e);
+        }
+      }
+
+      // Add system greeting
+      initialList.push({
+        id: "system-active",
+        title: "SLID Security System Active",
+        message: `Welcome, ${profile?.full_name}. Real-time monitoring is active.`,
         type: "system",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         read: true,
-      },
-    ]);
+      });
 
-    // 2. Real-time channel for User-specific alerts
-    const userChannel = supabase
-      .channel(`user-bell-notifications-${profile.user_id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${profile.user_id}`,
-        },
-        (payload) => {
-          const newNotif = payload.new as any;
-          addNotification({
-            title: newNotif.title || "Account Update",
-            message: newNotif.message || "You have a new update on your immigration profile.",
-            link: "/notifications",
-            type: "visa",
-          });
-        }
-      )
-      .subscribe();
+      setNotifications(initialList);
+    }
 
-    // 3. If Admin, listen for live staff access requests & submitted visa applications
+    loadInitialAlerts();
+
+    // Set up Real-time Channels
     let adminChannel: any = null;
     if (profile.role === "admin") {
       adminChannel = supabase
-        .channel("admin-bell-realtime")
+        .channel("admin-realtime-broadcast")
         .on(
           "postgres_changes",
           {
@@ -156,10 +222,29 @@ export function NotificationBellMenu() {
             const req = payload.new as any;
             addNotification({
               title: "New Staff Registration Request",
-              message: `${req.full_name} submitted an officer access request for ${req.requested_role?.replace("_", " ")}.`,
+              message: `${req.full_name} submitted an access request for ${req.requested_role?.replace("_", " ")}.`,
               link: "/admin/users",
               type: "staff",
             });
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "users",
+          },
+          (payload) => {
+            const user = payload.new as any;
+            if (!user.is_active && user.role !== "applicant") {
+              addNotification({
+                title: "New Officer Registration",
+                message: `${user.full_name} requested ${user.role?.replace("_", " ")} clearance.`,
+                link: "/admin/users",
+                type: "staff",
+              });
+            }
           }
         )
         .on(
@@ -183,7 +268,6 @@ export function NotificationBellMenu() {
     }
 
     return () => {
-      supabase.removeChannel(userChannel);
       if (adminChannel) supabase.removeChannel(adminChannel);
     };
   }, [profile]);
@@ -219,12 +303,12 @@ export function NotificationBellMenu() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[320px] sm:w-[380px] bg-white border border-primary-light rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-up font-['Tahoma']">
+        <div className="absolute right-0 mt-2 w-[310px] sm:w-[380px] bg-white border border-primary-light rounded-2xl shadow-2xl z-50 overflow-hidden animate-slide-up font-['Tahoma']">
           {/* Header */}
-          <div className="bg-primary text-white px-4 py-3 flex items-center justify-between shadow-xs">
+          <div className="bg-[#0B4F6C] text-white px-4 py-3 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
               <Bell size={16} />
-              <span className="text-xs font-bold">Real-Time Notifications</span>
+              <span className="text-xs font-bold">Live Alerts &amp; Notifications</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -239,7 +323,7 @@ export function NotificationBellMenu() {
               <button
                 type="button"
                 onClick={markAllRead}
-                className="text-[10px] text-white/90 hover:text-white font-semibold underline"
+                className="text-[10px] text-white/90 hover:text-white font-semibold underline cursor-pointer"
               >
                 Mark Read
               </button>
@@ -256,13 +340,14 @@ export function NotificationBellMenu() {
           {/* Device Push Permission Prompt if not granted */}
           {permission !== "granted" && (
             <div className="p-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2 text-xs">
-              <div className="text-[11px] text-amber-950">
-                <span>📱 Enable alerts on your device/lockscreen</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-amber-950">
+                <Smartphone size={15} className="text-amber-700 flex-shrink-0" />
+                <span>Enable phone lockscreen alerts</span>
               </div>
               <button
                 type="button"
                 onClick={requestPushPermission}
-                className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition whitespace-nowrap cursor-pointer shadow-xs"
+                className="bg-[#1E8E5A] hover:bg-[#166E46] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition whitespace-nowrap cursor-pointer shadow-xs"
               >
                 Allow
               </button>
@@ -282,7 +367,7 @@ export function NotificationBellMenu() {
                   to={n.link || "#"}
                   onClick={() => setIsOpen(false)}
                   className={`p-3.5 flex items-start gap-3 hover:bg-canvas transition block ${
-                    !n.read ? "bg-sky-50/60" : ""
+                    !n.read ? "bg-sky-50/70" : ""
                   }`}
                 >
                   <div
@@ -320,7 +405,7 @@ export function NotificationBellMenu() {
           {/* Footer */}
           <div className="p-2 bg-canvas/70 border-t border-primary-light text-center">
             <span className="text-[10px] text-ink-soft font-medium">
-              Live updates powered by Supabase &amp; Web Push
+              Live updates synced with Supabase Realtime
             </span>
           </div>
         </div>

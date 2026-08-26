@@ -267,12 +267,11 @@ export default function UserManagementPage() {
   useEffect(() => {
     loadUsers();
     loadCheckpoints();
+    loadRequests();
   }, [roleFilter, search]);
 
   useEffect(() => {
-    if (activeTab === "requests") {
-      loadRequests();
-    }
+    loadRequests();
   }, [activeTab, profile?.user_id]);
 
   // -------------------------------------------------------------
@@ -719,6 +718,31 @@ export default function UserManagementPage() {
           </button>
         </div>
 
+        {/* Top Notice if there are pending clearance requests */}
+        {pendingRequestsCount > 0 && activeTab === "users" && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg flex-shrink-0">
+                🛡️
+              </div>
+              <div>
+                <p className="text-xs font-bold text-ink">
+                  {pendingRequestsCount} Officer Clearance Request(s) Awaiting Review
+                </p>
+                <p className="text-[11px] text-ink-soft">
+                  Prospective staff members have registered and are waiting for your approval.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab("requests")}
+              className="bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer whitespace-nowrap shadow-xs"
+            >
+              Review Applications &rarr;
+            </button>
+          </div>
+        )}
+
         {/* TAB 1: USERS DIRECTORY (CRUD) */}
         {activeTab === "users" && (
           <SecurityPaperPanel className="p-6" showRosette>
@@ -730,112 +754,100 @@ export default function UserManagementPage() {
                   placeholder="Search by full name or email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full border border-primary-light rounded-md px-3.5 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  className="w-full border border-primary-light rounded-md px-3.5 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-body"
                 />
               </div>
 
-              {/* Role Filters */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                {(["all", "admin", "visa_officer", "immigration_officer", "applicant"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setRoleFilter(r)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition cursor-pointer ${
-                      roleFilter === r
-                        ? "bg-primary text-white shadow-2xs font-semibold"
-                        : "border border-primary-light text-ink-soft hover:text-ink hover:bg-white"
-                    }`}
-                  >
-                    {r === "all" ? "All Roles" : ROLE_LABELS[r]}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-ink-soft font-medium">Filter by Role:</label>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as any)}
+                  className="border border-primary-light rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-body"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="applicant">Applicants Only</option>
+                  <option value="immigration_officer">Immigration Officers</option>
+                  <option value="visa_officer">Visa Officers</option>
+                  <option value="admin">Administrators</option>
+                </select>
               </div>
             </div>
 
             {/* Users Table */}
             {loading ? (
-              <div className="p-12 text-center text-ink-soft text-xs">Loading user accounts...</div>
+              <div className="p-12 text-center text-ink-soft text-xs">Loading accounts...</div>
             ) : users.length === 0 ? (
-              <div className="p-12 text-center text-ink-soft text-xs">No user accounts found matching query.</div>
+              <div className="p-12 text-center text-ink-soft text-xs">
+                No user accounts found matching current filters.
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-primary-light bg-canvas/60 text-ink-soft uppercase text-[10px] tracking-wider font-semibold">
-                      <th className="py-3 px-4">User</th>
-                      <th className="py-3 px-4">Role</th>
-                      <th className="py-3 px-4">Duty Station / Details</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Created</th>
+                      <th className="py-3 px-4">Officer / User</th>
+                      <th className="py-3 px-4">Role &amp; Status</th>
+                      <th className="py-3 px-4">Badge / Duty Station</th>
+                      <th className="py-3 px-4">Contact Phone</th>
+                      <th className="py-3 px-4">Registered</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-primary-light/60">
                     {users.map((u) => {
-                      const staff =
-                        Array.isArray(u.staff_profiles) && u.staff_profiles.length > 0
-                          ? u.staff_profiles[0]
-                          : null;
-
+                      const staff = u.staff_profiles?.[0];
                       return (
                         <tr key={u.user_id} className="hover:bg-primary-light/20 transition">
-                          {/* User Name & Email */}
+                          {/* Name and Email */}
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold font-mono text-xs shadow-2xs flex-shrink-0">
-                                {u.full_name ? u.full_name.charAt(0).toUpperCase() : "U"}
-                              </div>
-                              <div>
-                                <p className="font-semibold text-ink">{u.full_name || "—"}</p>
-                                <p className="text-[11px] text-ink-soft font-mono">{u.email}</p>
-                              </div>
+                            <p className="font-semibold text-ink">{u.full_name}</p>
+                            <p className="text-[11px] text-ink-soft font-mono">{u.email}</p>
+                          </td>
+
+                          {/* Role and Active Status */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded font-bold ${
+                                  u.role === "admin"
+                                    ? "bg-purple-100 text-purple-900 border border-purple-300"
+                                    : u.role === "visa_officer"
+                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                    : u.role === "immigration_officer"
+                                    ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                    : "bg-canvas text-ink-soft border border-primary-light"
+                                }`}
+                              >
+                                {ROLE_LABELS[u.role] || u.role}
+                              </span>
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  u.is_active ? "bg-status-approved" : "bg-status-rejected"
+                                }`}
+                                title={u.is_active ? "Active" : "Disabled / Inactive"}
+                              />
                             </div>
                           </td>
 
-                          {/* Role */}
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold ${
-                                u.role === "admin"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : u.role === "visa_officer"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : u.role === "immigration_officer"
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : "bg-accent-light text-accent"
-                              }`}
-                            >
-                              {ROLE_LABELS[u.role] || u.role}
-                            </span>
-                          </td>
-
-                          {/* Staff details */}
+                          {/* Badge / Station */}
                           <td className="py-3.5 px-4 text-[11px]">
                             {staff ? (
                               <div>
-                                <p className="font-medium text-ink">{staff.duty_station}</p>
-                                <p className="text-ink-soft">{staff.rank_title} • {staff.department}</p>
+                                <p className="font-mono text-primary font-bold">{staff.staff_id_code}</p>
+                                <p className="text-ink-soft text-[10px]">{staff.duty_station}</p>
                               </div>
                             ) : (
-                              <span className="text-ink-soft italic">Public Traveler</span>
+                              <span className="text-ink-soft italic text-[10px]">N/A (Applicant)</span>
                             )}
                           </td>
 
-                          {/* Status */}
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                u.is_active
-                                  ? "bg-status-approved-bg text-status-approved"
-                                  : "bg-status-rejected-bg text-status-rejected"
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? "bg-status-approved" : "bg-status-rejected"}`} />
-                              {u.is_active ? "Active" : "Suspended"}
-                            </span>
+                          {/* Phone */}
+                          <td className="py-3.5 px-4 text-ink-soft text-[11px] font-mono">
+                            {u.phone || "—"}
                           </td>
 
-                          {/* Date */}
+                          {/* Date Registered */}
                           <td className="py-3.5 px-4 text-ink-soft font-mono text-[11px]">
                             {new Date(u.created_at).toLocaleDateString()}
                           </td>
@@ -897,7 +909,7 @@ export default function UserManagementPage() {
 
         {/* TAB 2: STAFF ACCESS APPLICATIONS */}
         {activeTab === "requests" && (
-          <SecurityPaperPanel className="p-6" showRosette>
+          <SecurityPaperPanel className="p-4 sm:p-6" showRosette>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-bold text-ink">
                 Prospective Officer Access Applications
@@ -917,80 +929,143 @@ export default function UserManagementPage() {
                 No officer access requests found.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-primary-light bg-canvas/60 text-ink-soft uppercase text-[10px] tracking-wider font-semibold">
-                      <th className="py-3 px-4">Applicant</th>
-                      <th className="py-3 px-4">Requested Role</th>
-                      <th className="py-3 px-4">Posting Station / Department</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Submitted</th>
-                      <th className="py-3 px-4 text-right">Clearance Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary-light/60">
-                    {requests.map((req) => (
-                      <tr key={req.request_id} className="hover:bg-primary-light/20 transition">
-                        <td className="py-3.5 px-4">
-                          <p className="font-semibold text-ink">{req.full_name}</p>
-                          <p className="text-[11px] text-ink-soft font-mono">{req.email}</p>
-                          {req.badge_number && (
-                            <p className="text-[10px] text-primary font-mono mt-0.5">
-                              Badge: {req.badge_number}
-                            </p>
+              <div>
+                {/* 1. Mobile Cards View (sm:hidden) */}
+                <div className="grid grid-cols-1 gap-3 sm:hidden mb-4">
+                  {requests.map((req) => (
+                    <div
+                      key={req.request_id}
+                      className="bg-white border border-primary-light rounded-2xl p-4 shadow-xs space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-sm text-ink">{req.full_name}</p>
+                          <p className="text-xs text-primary font-mono">{req.email}</p>
+                          {req.phone && (
+                            <p className="text-[11px] text-ink-soft font-mono mt-0.5">📞 {req.phone}</p>
                           )}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="font-mono text-[10px] uppercase bg-primary-light text-primary px-2 py-0.5 rounded font-bold">
-                            {req.requested_role.replace("_", " ")}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-[11px]">
-                          <p className="font-medium text-ink">{req.duty_station || "Freetown HQ"}</p>
-                          <p className="text-ink-soft">{req.rank_title || "Officer"} • {req.department}</p>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                              req.status === "approved"
-                                ? "bg-status-approved-bg text-status-approved"
-                                : req.status === "rejected"
-                                ? "bg-status-rejected-bg text-status-rejected"
-                                : "bg-status-pending-bg text-status-pending"
-                            }`}
+                        </div>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold ${
+                            req.status === "approved"
+                              ? "bg-status-approved-bg text-status-approved"
+                              : req.status === "rejected"
+                              ? "bg-status-rejected-bg text-status-rejected"
+                              : "bg-status-pending-bg text-status-pending"
+                          }`}
+                        >
+                          {req.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="bg-canvas/80 p-2.5 rounded-xl text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-ink-soft text-[10px] uppercase font-bold">Role:</span>
+                          <span className="font-bold text-[#0284C7]">{req.requested_role?.replace("_", " ")}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-ink-soft text-[10px] uppercase font-bold">Station:</span>
+                          <span className="text-ink">{req.duty_station || "Freetown HQ"}</span>
+                        </div>
+                      </div>
+
+                      {req.status === "pending" && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => handleApproveRequest(req)}
+                            disabled={approvingId === req.request_id}
+                            className="flex-1 bg-[#1E8E5A] hover:bg-[#166E46] active:scale-[0.99] text-white text-xs font-bold py-2.5 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-50 text-center"
                           >
-                            {req.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-ink-soft font-mono text-[11px]">
-                          {new Date(req.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          {req.status === "pending" ? (
-                            <div className="inline-flex items-center gap-2">
-                              <button
-                                onClick={() => handleApproveRequest(req)}
-                                disabled={approvingId === req.request_id}
-                                className="bg-status-approved text-white text-[11px] font-semibold px-3 py-1.5 rounded hover:opacity-90 disabled:opacity-50 transition cursor-pointer"
-                              >
-                                {approvingId === req.request_id ? "Approving..." : "✓ Approve"}
-                              </button>
-                              <button
-                                onClick={() => handleRejectRequest(req.request_id, req.full_name)}
-                                className="border border-status-rejected text-status-rejected hover:bg-status-rejected hover:text-white text-[11px] font-semibold px-3 py-1.5 rounded transition cursor-pointer"
-                              >
-                                ✕ Reject
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-ink-soft italic">Processed</span>
-                          )}
-                        </td>
+                            {approvingId === req.request_id ? "Approving..." : "✓ Approve & Issue Credentials"}
+                          </button>
+                          <button
+                            onClick={() => handleRejectRequest(req.request_id, req.full_name)}
+                            className="px-3 py-2.5 border border-status-rejected text-status-rejected hover:bg-status-rejected-bg text-xs font-semibold rounded-xl transition cursor-pointer"
+                          >
+                            ✕ Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* 2. Desktop Table View (hidden sm:block) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-primary-light bg-canvas/60 text-ink-soft uppercase text-[10px] tracking-wider font-semibold">
+                        <th className="py-3 px-4">Applicant</th>
+                        <th className="py-3 px-4">Requested Role</th>
+                        <th className="py-3 px-4">Posting Station / Department</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Submitted</th>
+                        <th className="py-3 px-4 text-right">Clearance Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-primary-light/60">
+                      {requests.map((req) => (
+                        <tr key={req.request_id} className="hover:bg-primary-light/20 transition">
+                          <td className="py-3.5 px-4">
+                            <p className="font-semibold text-ink">{req.full_name}</p>
+                            <p className="text-[11px] text-ink-soft font-mono">{req.email}</p>
+                            {req.badge_number && (
+                              <p className="text-[10px] text-primary font-mono mt-0.5">
+                                Badge: {req.badge_number}
+                              </p>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="font-mono text-[10px] uppercase bg-primary-light text-primary px-2 py-0.5 rounded font-bold">
+                              {req.requested_role.replace("_", " ")}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-[11px]">
+                            <p className="font-medium text-ink">{req.duty_station || "Freetown HQ"}</p>
+                            <p className="text-ink-soft">{req.rank_title || "Officer"} • {req.department}</p>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                                req.status === "approved"
+                                  ? "bg-status-approved-bg text-status-approved"
+                                  : req.status === "rejected"
+                                  ? "bg-status-rejected-bg text-status-rejected"
+                                  : "bg-status-pending-bg text-status-pending"
+                              }`}
+                            >
+                              {req.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-ink-soft font-mono text-[11px]">
+                            {new Date(req.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            {req.status === "pending" ? (
+                              <div className="inline-flex items-center gap-2">
+                                <button
+                                  onClick={() => handleApproveRequest(req)}
+                                  disabled={approvingId === req.request_id}
+                                  className="bg-status-approved text-white text-[11px] font-semibold px-3 py-1.5 rounded hover:opacity-90 disabled:opacity-50 transition cursor-pointer"
+                                >
+                                  {approvingId === req.request_id ? "Approving..." : "✓ Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleRejectRequest(req.request_id, req.full_name)}
+                                  className="border border-status-rejected text-status-rejected hover:bg-status-rejected hover:text-white text-[11px] font-semibold px-3 py-1.5 rounded transition cursor-pointer"
+                                >
+                                  ✕ Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-ink-soft italic">Processed</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </SecurityPaperPanel>
