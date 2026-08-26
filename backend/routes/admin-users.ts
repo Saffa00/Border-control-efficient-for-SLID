@@ -22,6 +22,52 @@ import {
 const router = Router();
 
 // ---------------------------------------------------------------
+// POST /api/auth/resolve-username
+// Resolves an official username or badge number to the user's email address
+// ---------------------------------------------------------------
+router.post("/api/auth/resolve-username", async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username is required" });
+
+  const cleanUser = username.trim().toLowerCase();
+
+  try {
+    // 1. Check if cleanUser is already an email
+    if (cleanUser.includes("@")) {
+      return res.json({ email: cleanUser });
+    }
+
+    // 2. Check auth.users user_metadata for username
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+    if (authList?.users) {
+      const matched = authList.users.find(
+        (u) =>
+          u.user_metadata?.username?.toLowerCase() === cleanUser ||
+          u.email?.toLowerCase().startsWith(cleanUser)
+      );
+      if (matched?.email) {
+        return res.json({ email: matched.email });
+      }
+    }
+
+    // 3. Check public.staff_profiles for staff_id_code
+    const { data: staff } = await supabaseAdmin
+      .from("staff_profiles")
+      .select("users(email)")
+      .ilike("staff_id_code", cleanUser)
+      .maybeSingle();
+
+    if (staff && (staff.users as any)?.email) {
+      return res.json({ email: (staff.users as any).email });
+    }
+
+    return res.status(404).json({ error: "Username not recognized" });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------
 // POST /api/staff/signup
 // Direct staff onboarding registration:
 // SECURITY HARDENING: Disallows privilege escalation. Rejects any

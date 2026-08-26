@@ -46,17 +46,36 @@ export default function StaffLoginPage() {
     try {
       let targetEmail = cleanIdentifier.toLowerCase();
 
-      // If user typed a username without @ (e.g. lucysaffaj9wy2026), lookup their email
+      // If user typed a username without @ (e.g. lucysaffa89742026), resolve their email
       if (!targetEmail.includes("@")) {
-        const { data: userByUsername } = await supabase
-          .from("users")
-          .select("email")
-          .ilike("email", `${targetEmail}%`)
-          .limit(1)
-          .maybeSingle();
+        // 1. Try Backend Username Resolver API
+        try {
+          const res = await fetch("/api/auth/resolve-username", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: cleanIdentifier }),
+          });
+          const text = await res.text();
+          try {
+            const data = JSON.parse(text);
+            if (data?.email) targetEmail = data.email.toLowerCase();
+          } catch {}
+        } catch {}
 
-        if (userByUsername?.email) {
-          targetEmail = userByUsername.email;
+        // 2. Fallback: Client-side match by full name prefix or email prefix
+        if (!targetEmail.includes("@")) {
+          const namePrefix = cleanIdentifier.replace(/[0-9]/g, "").slice(0, 4);
+          if (namePrefix) {
+            const { data: userMatches } = await supabase
+              .from("users")
+              .select("email, full_name")
+              .or(`email.ilike.%${namePrefix}%,full_name.ilike.%${namePrefix}%`)
+              .limit(1);
+
+            if (userMatches && userMatches.length > 0) {
+              targetEmail = userMatches[0].email.toLowerCase();
+            }
+          }
         }
       }
 
