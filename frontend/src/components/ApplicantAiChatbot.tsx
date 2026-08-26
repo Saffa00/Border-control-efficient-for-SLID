@@ -11,51 +11,38 @@ interface Message {
 }
 
 const SYSTEM_INSTRUCTION = `
-You are "Salone Immigration Assistant", an expert AI virtual guide for the Republic of Sierra Leone Immigration Department (SLID), powered by Google Gemini.
-You must adopt the signature conversational structure, intelligence, warmth, and polish of ChatGPT.
+You are "Salone Immigration Assistant", the official AI virtual guide for the Republic of Sierra Leone Immigration Department (SLID).
+Your duty is to assist travelers, citizens, and applicants with visa policies, biometric passports, port of entry requirements, and official fees.
 
-Conversational Format Protocol (Follow for Every Response):
-1. Step 1 — Exchange Greetings & Friendly Acknowledgement:
-   - Always open your response with a warm, courteous greeting and friendly acknowledgement (e.g. "Hello! Welcome to the Sierra Leone Immigration Assistant. It is a pleasure to assist you today!" or "Hi there! I would be delighted to help you with that.").
-2. Step 2 — Clear & Structured Information:
-   - Move smoothly into the core answer. Use clear paragraphs, organized bullet points (•), and bold section titles.
-3. Step 3 — Helpful Next Steps & Closing:
-   - Conclude with a welcoming question or actionable next step (e.g. "Please let me know if you need help starting your application or have any other questions!").
+Response Protocol:
+1. Greet the user with warmth and professionalism.
+2. Provide concise, 100% accurate, clearly structured answers using clean bullet points (•) and bold titles.
+3. Conclude with a helpful question or next steps to assist the user.
+4. CRITICAL: Output ONLY your direct user-facing response. NEVER output internal labels (e.g. do NOT write "Step 1:", "Step 2:", "Step 3:", "Closing", "Self-Correction", or checklist rubrics like "No raw asterisks? Check").
 
-Core Knowledge Base:
-1. Visa Types & Fees:
-   - Tourist e-Visa (Single Entry, 30 days): $80 USD.
-   - Business e-Visa (Single or Multiple Entry, up to 90 days): $160 USD.
-   - Transit Visa (Up to 7 days for connecting flights): $40 USD.
-   - Diplomatic / Official Visa: $0 (Gratis) with official diplomatic note verbale.
-
-2. Document & Passport Requirements:
-   - Biometric Passport valid for at least 6 months beyond intended date of departure.
-   - At least 2 blank passport pages.
-   - Recent passport photograph with white background.
-   - Flight itinerary / return ticket and proof of accommodation/hotel booking.
-   - International Yellow Fever Vaccination Certificate (mandatory upon arrival).
-
-3. ECOWAS Citizens Exemption:
-   - Citizens of ECOWAS member states (Ghana, Nigeria, Guinea, Liberia, Senegal, Côte d'Ivoire, Gambia, Benin, Burkina Faso, Cape Verde, Guinea-Bissau, Mali, Niger, Togo) do NOT require an entry visa under the ECOWAS Free Movement Protocol.
-   - They must hold a valid biometric passport or ECOWAS Travel Certificate and receive an entry stamp upon arrival.
-
-4. Border Checkpoints:
-   - FNA: Freetown International Airport (Lungi) — Main air entry.
-   - Queen Elizabeth II Quay (Seaport) — Maritime passenger/cargo terminal.
-   - Gbalamuya Border Post (Kambia) — Primary Guinea land crossing.
-   - Jendema Border Post (Pujehun) — Primary Liberia land crossing.
-   - Koindu Border Post (Kailahun) — Tri-border crossing.
-
-5. Application & Turnaround Time:
-   - e-Visa applications are submitted online 24/7.
-   - Standard processing turnaround time is 48 to 72 business hours.
-   - Once approved, applicants receive a Digital Visa Certificate with an encrypted QR Code.
-   - Upon arrival at the border, show the QR code on mobile or printed pass along with physical passport.
-
-Formatting Rules:
-- Do NOT leave raw asterisks in sentences. Use clean text and standard bullet points.
-- Keep the tone polite, patriotic, helpful, and natural.
+Official SLID Knowledge:
+- Visa Types & Fees:
+  • Tourist e-Visa (Single Entry, 30 days): $80 USD
+  • Business e-Visa (Single/Multiple Entry, up to 90 days): $160 USD
+  • Transit Visa (Up to 7 days): $40 USD
+  • Diplomatic / Official Visa: Free ($0 Gratis) with official Note Verbale
+- Passport Requirements:
+  • Valid for at least 6 months beyond travel date
+  • Minimum 2 blank passport pages
+  • Recent passport photograph (white background)
+  • Return ticket and proof of accommodation
+  • Mandatory International Yellow Fever Vaccination Certificate upon arrival
+- ECOWAS Exemption:
+  • Citizens of ECOWAS member states (Ghana, Nigeria, Guinea, Liberia, Senegal, Côte d'Ivoire, Gambia, Benin, Burkina Faso, Cape Verde, Guinea-Bissau, Mali, Niger, Togo) do NOT require an entry visa. They must present a valid biometric passport or ECOWAS Travel Certificate.
+- Designated Border Checkpoints:
+  • FNA: Freetown International Airport (Lungi) — Main air post
+  • Queen Elizabeth II Quay — Maritime port
+  • Gbalamuya Border Post (Kambia) — Guinea post
+  • Jendema Border Post (Pujehun) — Liberia post
+  • Koindu Border Post (Kailahun) — Tri-border post
+- Turnaround & Delivery:
+  • e-Visas are processed online 24/7 in 48 to 72 business hours.
+  • Approved travelers receive a digital certificate with an encrypted QR entry permit.
 `;
 
 const QUICK_PROMPTS = [
@@ -475,38 +462,47 @@ export function ApplicantAiChatbot() {
   }
 
   return (
-    <div className="fixed bottom-20 right-3.5 sm:bottom-6 sm:right-6 z-50 font-['Tahoma']">
-      {/* 1. Right-Hand Floating Chatbot Launcher with Green, White & Blue Tricolour Logo */}
+    <>
+      {/* 1. Right-Hand Floating Chatbot Launcher (when closed) */}
       {!isOpen && (
-        <div className="relative group flex items-center justify-end">
-          {/* Floating Tooltip Label */}
-          <div className="absolute right-16 bg-[#0B1528] text-white border border-emerald-500/40 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none hidden sm:flex items-center gap-2">
-            <SierraLeoneFlag width={14} height={9} />
-            <span>Chat with Salone Immigration AI ✦</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="relative flex items-center justify-center w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-[#0A1220] border-2 border-emerald-500/50 shadow-2xl hover:shadow-emerald-900/60 transition transform hover:scale-110 active:scale-95 cursor-pointer overflow-hidden p-0.5 group-hover:border-emerald-400"
-            title="Chat with Salone Immigration AI"
-            aria-label="Open Immigration AI Virtual Assistant"
-          >
-            <div className="absolute inset-0 rounded-full p-[2px] bg-gradient-to-b from-[#1EB53A] via-white to-[#0072C6]">
-              <div className="w-full h-full bg-[#070D18] rounded-full flex items-center justify-center">
-                <SaloneChatbotBadgeIcon size={40} />
-              </div>
+        <div className="fixed bottom-20 right-3.5 sm:bottom-6 sm:right-6 z-40 font-['Tahoma']">
+          <div className="relative group flex items-center justify-end">
+            {/* Floating Tooltip Label */}
+            <div className="absolute right-16 bg-[#0B1528] text-white border border-emerald-500/40 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none hidden sm:flex items-center gap-2">
+              <SierraLeoneFlag width={14} height={9} />
+              <span>Chat with Salone Immigration AI ✦</span>
             </div>
 
-            {/* Online Green Pulsing Beacon */}
-            <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-[#0A1220] animate-pulse"></span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="relative flex items-center justify-center w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-[#0A1220] border-2 border-emerald-500/50 shadow-2xl hover:shadow-emerald-900/60 transition transform hover:scale-110 active:scale-95 cursor-pointer overflow-hidden p-0.5 group-hover:border-emerald-400"
+              title="Chat with Salone Immigration AI"
+              aria-label="Open Immigration AI Virtual Assistant"
+            >
+              <div className="absolute inset-0 rounded-full p-[2px] bg-gradient-to-b from-[#1EB53A] via-white to-[#0072C6]">
+                <div className="w-full h-full bg-[#070D18] rounded-full flex items-center justify-center">
+                  <SaloneChatbotBadgeIcon size={40} />
+                </div>
+              </div>
+
+              {/* Online Green Pulsing Beacon */}
+              <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-[#0A1220] animate-pulse"></span>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* 2. ChatGPT-Style Interactive Chat Window */}
+      {/* 2. ChatGPT-Style Full-Screen Mobile / Floating Desktop Chat Window */}
       {isOpen && (
-        <div className="bg-white border border-primary-light rounded-2xl shadow-2xl w-[94vw] sm:w-[410px] h-[80vh] sm:h-[580px] max-h-[640px] flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 font-['Tahoma'] flex flex-col justify-end sm:block">
+          {/* Backdrop on mobile */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs sm:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+
+          <div className="relative z-10 bg-white sm:border sm:border-primary-light sm:rounded-2xl shadow-2xl w-full sm:w-[420px] h-[100dvh] sm:h-[590px] flex flex-col overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="bg-primary text-white p-3.5 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
@@ -748,7 +744,8 @@ export function ApplicantAiChatbot() {
             </p>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </>
+);
 }
