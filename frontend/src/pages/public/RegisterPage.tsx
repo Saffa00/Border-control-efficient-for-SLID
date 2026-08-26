@@ -79,23 +79,40 @@ export default function RegisterPage() {
       return;
     }
 
-    // Sign up with Supabase Auth
+    // Sign up with Supabase Auth — email confirmation may or may not be required
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
       password: formData.password,
       options: { data: { full_name: formData.fullName.trim() } },
     });
 
-    if (signUpError) {
-      setError(signUpError.message);
+    // If there is a signUp error AND no user was created, abort
+    if (signUpError && !data?.user) {
+      // Friendly message for email sending failures
+      const msg = signUpError.message.toLowerCase();
+      if (
+        msg.includes("sending") ||
+        msg.includes("email") ||
+        msg.includes("smtp") ||
+        msg.includes("rate limit") ||
+        msg.includes("over_email_send_rate_limit")
+      ) {
+        setError(
+          "Your account was created but we could not send a verification email right now (email service limit). Please try logging in directly — your account is active."
+        );
+      } else {
+        setError(signUpError.message);
+      }
       setLoading(false);
       return;
     }
 
-    if (data.session) {
-      // Direct insert into public.users with all profile, address & emergency contact fields
+    // If we have a user (either with session or pending email confirmation)
+    const userId = data?.user?.id || data?.session?.user?.id;
+    if (userId) {
+      // Insert profile into public.users
       const { error: profileError } = await supabase.from("users").insert({
-        user_id: data.user!.id,
+        user_id: userId,
         full_name: formData.fullName.trim(),
         email: cleanEmail,
         phone: formData.phone.trim() || null,
@@ -111,18 +128,34 @@ export default function RegisterPage() {
       });
 
       if (profileError) {
-        setError(profileError.message);
-        setLoading(false);
-        return;
+        // Ignore duplicate key — profile may already exist
+        if (!profileError.message.includes("duplicate") && !profileError.message.includes("unique")) {
+          setError(profileError.message);
+          setLoading(false);
+          return;
+        }
       }
 
       setLoading(false);
-      navigate("/dashboard");
+
+      // If active session — go straight to dashboard
+      if (data?.session) {
+        navigate("/dashboard");
+        return;
+      }
+
+      // If email confirmation is required — show confirmation screen
+      setNeedsEmailConfirmation(true);
       return;
     }
 
+    // Fallback: no user created
+    if (signUpError) {
+      setError(signUpError.message);
+    } else {
+      setNeedsEmailConfirmation(true);
+    }
     setLoading(false);
-    setNeedsEmailConfirmation(true);
   }
 
   if (needsEmailConfirmation) {
