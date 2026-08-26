@@ -37,86 +37,110 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function loadProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setProfile(null);
-        setLoading(false);
-        setIsTemporaryPassword(false);
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setProfile(null);
+          setLoading(false);
+          setIsTemporaryPassword(false);
+          return;
+        }
 
-      const metadata = session.user.user_metadata ?? {};
-      const isTemp =
-        metadata.temporary_password === true ||
-        sessionStorage.getItem("slid_temporary_password") === "true";
-      setIsTemporaryPassword(isTemp);
+        const metadata = session.user.user_metadata ?? {};
+        const isTemp =
+          metadata.temporary_password === true ||
+          sessionStorage.getItem("slid_temporary_password") === "true";
+        setIsTemporaryPassword(isTemp);
 
-      const oauthAvatar = metadata.avatar_url || metadata.picture || null;
-      const oauthFullName =
-        metadata.full_name || metadata.name || session.user.email?.split("@")[0] || "Officer";
+        const oauthAvatar = metadata.avatar_url || metadata.picture || null;
+        const oauthFullName =
+          metadata.full_name || metadata.name || session.user.email?.split("@")[0] || "Officer";
 
-      // 1. Check users table by user_id
-      let { data } = await supabase
-        .from("users")
-        .select("user_id, full_name, role, email")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      // 2. Fallback: Check users table by email
-      if (!data && session.user.email) {
-        const { data: byEmail } = await supabase
+        // 1. Check users table by user_id
+        let { data } = await supabase
           .from("users")
           .select("user_id, full_name, role, email")
-          .eq("email", session.user.email)
+          .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (byEmail) {
-          data = byEmail;
-        }
-      }
+        // 2. Fallback: Check users table by email
+        if (!data && session.user.email) {
+          const { data: byEmail } = await supabase
+            .from("users")
+            .select("user_id, full_name, role, email")
+            .eq("email", session.user.email)
+            .maybeSingle();
 
-      if (data) {
-        setProfile({
-          ...data,
-          avatar_url: oauthAvatar,
-        });
+          if (byEmail) {
+            data = byEmail;
+            // Sync the user_id in case it was out of sync
+            await supabase
+              .from("users")
+              .update({ user_id: session.user.id })
+              .eq("email", session.user.email);
+          }
+        }
+
+        if (data) {
+          setProfile({
+            ...data,
+            avatar_url: oauthAvatar,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // 3. Auto-deduce role from metadata or email domain for first-time sign-ins
+        const metaRole = metadata.role;
+        const emailLower = session.user.email?.toLowerCase() || "";
+        let deducedRole: Role = metaRole || "applicant";
+        if (!metaRole) {
+          if (emailLower.includes("admin") || emailLower === "saffapetermj@gmail.com") {
+            deducedRole = "admin";
+          } else if (emailLower.includes("visa")) {
+            deducedRole = "visa_officer";
+          }
+        }
+
+        // 4. Auto-create profile row — may fail due to RLS or duplicate, that's ok
+        try {
+          const { data: created } = await supabase
+            .from("users")
+            .insert({
+              user_id: session.user.id,
+              full_name: oauthFullName,
+              email: session.user.email ?? (session.user.phone ? `${session.user.phone}@phone.slid.gov.sl` : ""),
+              phone: session.user.phone ?? null,
+              phone_verified: !!session.user.phone,
+              role: deducedRole,
+            })
+            .select("user_id, full_name, role, email")
+            .maybeSingle();
+
+          setProfile(created ? { ...created, avatar_url: oauthAvatar } : {
+            user_id: session.user.id,
+            full_name: oauthFullName,
+            role: deducedRole,
+            email: session.user.email || "",
+            avatar_url: oauthAvatar,
+          });
+        } catch {
+          // Insert failed (RLS, duplicate, etc.) — use in-memory profile so app doesn't freeze
+          setProfile({
+            user_id: session.user.id,
+            full_name: oauthFullName,
+            role: deducedRole,
+            email: session.user.email || "",
+            avatar_url: oauthAvatar,
+          });
+        }
+      } catch (err) {
+        console.error("AuthContext loadProfile error:", err);
+        setProfile(null);
+      } finally {
+        // ALWAYS resolve loading — prevents infinite spinner
         setLoading(false);
-        return;
       }
-
-      // 3. Auto-deduce role from metadata or email domain for first-time sign-ins
-      const metaRole = metadata.role;
-      const emailLower = session.user.email?.toLowerCase() || "";
-      let deducedRole: Role = metaRole || "applicant";
-      if (!metaRole) {
-        if (emailLower.includes("admin") || emailLower === "saffapetermj@gmail.com") {
-          deducedRole = "admin";
-        } else if (emailLower.includes("visa")) {
-          deducedRole = "visa_officer";
-        }
-      }
-
-      const { data: created } = await supabase
-        .from("users")
-        .insert({
-          user_id: session.user.id,
-          full_name: oauthFullName,
-          email: session.user.email ?? (session.user.phone ? `${session.user.phone}@phone.slid.gov.sl` : ""),
-          phone: session.user.phone ?? null,
-          phone_verified: !!session.user.phone,
-          role: deducedRole,
-        })
-        .select("user_id, full_name, role, email")
-        .maybeSingle();
-
-      setProfile(created ? { ...created, avatar_url: oauthAvatar } : {
-        user_id: session.user.id,
-        full_name: oauthFullName,
-        role: deducedRole,
-        email: session.user.email || "",
-        avatar_url: oauthAvatar,
-      });
-      setLoading(false);
     }
 
     // Auto-detect password recovery links landing from email
