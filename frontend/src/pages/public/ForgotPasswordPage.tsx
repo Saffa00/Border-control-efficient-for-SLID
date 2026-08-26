@@ -27,6 +27,24 @@ export default function ForgotPasswordPage() {
 
     try {
       const redirectUrl = `${window.location.origin}/reset-password`;
+
+      // 1. Dispatch via SLID backend for official crest logo & branded government layout
+      try {
+        const res = await fetch("/api/auth/request-password-reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: cleanEmail, redirectUrl }),
+        });
+
+        if (res.ok) {
+          setSent(true);
+          return;
+        }
+      } catch (backendErr) {
+        console.warn("Backend reset endpoint unavailable, using direct Supabase auth fallback:", backendErr);
+      }
+
+      // 2. Direct Supabase Auth Fallback
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl,
       });

@@ -82,9 +82,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
 
+    // Auto-detect password recovery links landing from email
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    if (
+      (hash.includes("type=recovery") || search.includes("type=recovery") || hash.includes("type=invite")) &&
+      window.location.pathname !== "/reset-password"
+    ) {
+      window.location.href = `/reset-password${hash}`;
+      return;
+    }
+
     loadProfile();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        if (window.location.pathname !== "/reset-password") {
+          window.location.href = "/reset-password";
+          return;
+        }
+      }
       loadProfile();
     });
     return () => subscription.subscription.unsubscribe();

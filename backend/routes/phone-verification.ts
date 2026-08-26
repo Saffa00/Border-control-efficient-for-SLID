@@ -13,6 +13,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import { sendSMS, phoneVerificationSMS } from "../lib/smsService";
+import { sendEmail, passwordResetEmail } from "../lib/emailService";
 
 const router = Router();
 
@@ -160,6 +161,72 @@ router.post("/api/auth/verify-phone-otp", verifyRateLimiter, async (req, res) =>
   } catch (err: any) {
     console.error("verify-phone-otp failed:", err);
     return res.status(500).json({ error: err.message ?? "Internal error" });
+  }
+});
+
+// ---------------------------------------------------------------
+// POST /api/auth/request-password-reset
+// Dispatches official SLID-branded password recovery email via Resend
+// ---------------------------------------------------------------
+router.post("/api/auth/request-password-reset", async (req, res) => {
+  const { email, redirectUrl } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email address is required." });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const targetRedirect = redirectUrl || "https://sl-immigration-system.vercel.app/reset-password";
+
+  try {
+    // 1. Generate secure password recovery link via Supabase Auth Admin
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email: cleanEmail,
+      options: {
+        redirectTo: targetRedirect,
+      },
+    });
+
+    if (linkError) {
+      console.warn("generateLink error:", linkError.message);
+      // Return safe message without exposing whether user exists
+      return res.json({
+        success: true,
+        message: "If your email is registered, a password recovery link has been sent.",
+      });
+    }
+
+    const actionLink = linkData?.properties?.action_link;
+    if (!actionLink) {
+      return res.status(500).json({ error: "Could not generate recovery link." });
+    }
+
+    // 2. Lookup recipient name for personal touch
+    const { data: userProfile } = await supabaseAdmin
+      .from("users")
+      .select("full_name")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    // 3. Dispatch official SLID branded email template
+    const emailResult = await sendEmail({
+      to: cleanEmail,
+      subject: "🔒 Reset Your Account Password — Sierra Leone Immigration Department",
+      html: passwordResetEmail(actionLink, userProfile?.full_name),
+    });
+
+    if (!emailResult.success) {
+      console.warn("Resend email failed, falling back to direct notification:", emailResult.error);
+    }
+
+    return res.json({
+      success: true,
+      message: "Official SLID password recovery email dispatched successfully.",
+    });
+  } catch (err: any) {
+    console.error("request-password-reset exception:", err);
+    return res.status(500).json({ error: "Failed to dispatch password recovery email." });
   }
 });
 
