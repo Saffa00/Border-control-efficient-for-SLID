@@ -299,7 +299,7 @@ export default function StaffLoginPage() {
           </form>
 
           {/* Footer Registration Link */}
-          <div className="mt-6 pt-5 border-t border-primary-light/60 text-center">
+          <div className="mt-6 pt-5 border-t border-primary-light/60 text-center space-y-3">
             <p className="text-xs text-ink-soft">
               Need a new staff account?{" "}
               <Link
@@ -309,6 +309,37 @@ export default function StaffLoginPage() {
                 Start staff account
               </Link>
             </p>
+
+            {/* Mobile PWA Cache Reset Helper */}
+            <div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    if ("serviceWorker" in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      for (const reg of regs) {
+                        await reg.unregister();
+                      }
+                    }
+                    if ("caches" in window) {
+                      const keys = await caches.keys();
+                      for (const key of keys) {
+                        await caches.delete(key);
+                      }
+                    }
+                    localStorage.removeItem("sb-access-token");
+                    localStorage.removeItem("sb-refresh-token");
+                    window.location.reload();
+                  } catch {
+                    window.location.reload();
+                  }
+                }}
+                className="text-[11px] text-zinc-400 hover:text-[#0284C7] transition cursor-pointer underline inline-flex items-center gap-1"
+              >
+                <span>🔄 Phone App Lagging? Tap to Force-Sync Latest Update</span>
+              </button>
+            </div>
           </div>
         </SecurityPaperPanel>
       </div>
