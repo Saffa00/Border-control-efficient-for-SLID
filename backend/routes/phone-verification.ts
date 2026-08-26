@@ -176,7 +176,12 @@ router.post("/api/auth/request-password-reset", async (req, res) => {
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const targetRedirect = redirectUrl || "https://sl-immigration-system.vercel.app/reset-password";
+  
+  // Choose safe redirect: if frontend sent a localhost url but backend is running in production, prefer live url
+  let targetRedirect = redirectUrl || "https://sl-immigration-system.vercel.app/reset-password";
+  if (targetRedirect.includes("localhost") && process.env.NODE_ENV === "production") {
+    targetRedirect = "https://sl-immigration-system.vercel.app/reset-password";
+  }
 
   try {
     // 1. Generate secure password recovery link via Supabase Auth Admin
