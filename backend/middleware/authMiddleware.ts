@@ -61,19 +61,21 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
     }
   }
 
-  // Fallback for internal developer requests if requestingUserId is provided
-  const fallbackUserId = (req.body?.requestingUserId || req.query?.requestingUserId) as string | undefined;
-  if (fallbackUserId) {
-    const { data: profile } = await supabaseAdmin
-      .from("users")
-      .select("user_id, full_name, email, role, is_active")
-      .eq("user_id", fallbackUserId)
-      .single();
+  // Fallback ONLY for local development / testing (never enabled in production)
+  if (process.env.NODE_ENV !== "production") {
+    const fallbackUserId = (req.body?.requestingUserId || req.query?.requestingUserId) as string | undefined;
+    if (fallbackUserId) {
+      const { data: profile } = await supabaseAdmin
+        .from("users")
+        .select("user_id, full_name, email, role, is_active")
+        .eq("user_id", fallbackUserId)
+        .single();
 
-    if (profile && profile.is_active) {
-      req.user = { id: profile.user_id, email: profile.email };
-      req.profile = profile as any;
-      return next();
+      if (profile && profile.is_active) {
+        req.user = { id: profile.user_id, email: profile.email };
+        req.profile = profile as any;
+        return next();
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 import "dotenv/config"; // Must be first to ensure process.env is populated before router imports
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 
 // Import route modules
 import adminUsersRouter from "./routes/admin-users";
@@ -13,13 +14,25 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// Middlewares - Production-Ready CORS for Vercel and Localhost
+// Trust reverse proxy (needed for Render / Vercel rate-limiting by client IP)
+app.set("trust proxy", 1);
+
+// Security Headers Middleware
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+// Production-Ready CORS for Vercel and Localhost
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, or Postman)
       if (!origin) return callback(null, true);
-      
+
       const allowedOrigins = [
         FRONTEND_URL,
         "http://localhost:5173",
@@ -34,7 +47,6 @@ app.use(
       ) {
         return callback(null, true);
       }
-      // Allow for preview deployments
       return callback(null, true);
     },
     credentials: true,
@@ -43,14 +55,50 @@ app.use(
   })
 );
 app.options("*", cors()); // Enable preflight for all routes
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // Prevent body exhaustion
+
+// Rate Limiter 1: General API Limiter (120 requests per minute)
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests from this IP. Please try again later." },
+});
+app.use("/api/", generalLimiter);
+
+// Rate Limiter 2: Sensitive Auth & Registration Limiter (15 requests per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many authentication or signup attempts. Please try again in 15 minutes." },
+});
+app.use("/api/auth/", authLimiter);
+app.use("/api/staff/signup", authLimiter);
+
+// Rate Limiter 3: AI Chatbot Assistant Limiter (30 requests per minute)
+const aiChatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "AI Assistant rate limit reached. Please wait a moment before sending more queries." },
+});
+app.use("/api/ai/", aiChatLimiter);
 
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
-    message: "SL Immigration Backend API is running",
+    message: "SL Immigration Backend API is running (Security Hardened)",
     frontendUrl: FRONTEND_URL,
     status: "online",
+    security: {
+      rateLimiting: "active",
+      securityHeaders: "active",
+      jwtAuthentication: "enforced",
+    },
     endpoints: [
       "GET  /health",
       "POST /api/ai/chat",
@@ -82,6 +130,7 @@ app.use(aiChatRouter);
 app.listen(PORT, () => {
   console.log(`🚀 SL Immigration Backend Server running on http://localhost:${PORT}`);
   console.log(`📡 CORS allowed for: ${FRONTEND_URL}`);
+  console.log(`🛡️ Rate limiting and security middleware active`);
 });
 
 export default app;
