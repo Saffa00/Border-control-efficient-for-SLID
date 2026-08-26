@@ -208,13 +208,12 @@ export default function UserManagementPage() {
         console.warn("Direct staff_access_requests query notice:", err);
       }
 
-      // 2. Query any inactive officer users in public.users (fallback pending registrations)
+      // 2. Query any inactive users in public.users (pending registrations)
       try {
         const { data: inactiveUsers } = await supabase
           .from("users")
           .select("user_id, full_name, email, role, phone, created_at, is_active")
-          .eq("is_active", false)
-          .neq("role", "applicant");
+          .eq("is_active", false);
 
         if (inactiveUsers && inactiveUsers.length > 0) {
           for (const u of inactiveUsers) {
