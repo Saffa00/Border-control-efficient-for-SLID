@@ -15,8 +15,36 @@ export function MobileAppBottomNav() {
 
   let tabs: TabItem[] = [];
 
-  // 1. Admin Portal Context
-  if (path.startsWith("/admin")) {
+  // Check route categories precisely to avoid overlapping prefixes (e.g. /borders vs /border/check-in)
+  const isPublicInfoPage = [
+    "/",
+    "/about",
+    "/services",
+    "/borders",
+    "/contact",
+    "/applicant",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/staff/login",
+    "/staff/signup",
+    "/staff/request-access",
+    "/unauthorized",
+  ].includes(path);
+
+  // 1. Explicit Public & 5-Borders Information Context
+  if (isPublicInfoPage) {
+    tabs = [
+      { name: "Home", path: "/", icon: "🏠", exact: true },
+      { name: "About", path: "/about", icon: "🏛️" },
+      { name: "Services", path: "/services", icon: "📋" },
+      { name: "Borders", path: "/borders", icon: "🗺️" },
+      { name: "Contact", path: "/contact", icon: "✉️" },
+    ];
+  }
+  // 2. Admin Executive Portal Context
+  else if (path.startsWith("/admin")) {
     tabs = [
       { name: "Overview", path: "/admin", icon: "📊", exact: true },
       { name: "Users", path: "/admin/users", icon: "👥" },
@@ -25,27 +53,33 @@ export function MobileAppBottomNav() {
       { name: "Audit Log", path: "/admin/audit-log", icon: "🔒" },
     ];
   }
-  // 2. Visa Officer Portal Context
-  else if (path.startsWith("/visa-officer") || path === "/visa/portal") {
+  // 3. Visa Officer Adjudication Console Context
+  else if (path.startsWith("/visa-officer")) {
     tabs = [
-      { name: "Queue", path: "/visa-officer", icon: "📋" },
+      { name: "Queue", path: "/visa-officer", icon: "📋", exact: true },
       { name: "Consular", path: "/visa/portal", icon: "🏛️" },
       { name: "Borders", path: "/borders", icon: "🗺️" },
       { name: "Profile", path: "/profile", icon: "👤" },
-      { name: "Staff Login", path: "/staff/login", icon: "🚪" },
+      { name: "Staff", path: "/staff/login", icon: "🚪" },
     ];
   }
-  // 3. Border Officer Portal Context
-  else if (path.startsWith("/border")) {
+  // 4. Border Officer Clearance Desk Context (Only specific /border/* officer operational routes)
+  else if (
+    path === "/border/check-in" ||
+    path === "/border/verify-qr" ||
+    path === "/border/watchlist" ||
+    path === "/border/overstay-report" ||
+    path.startsWith("/border-officer")
+  ) {
     tabs = [
       { name: "Check-In", path: "/border/check-in", icon: "🛂" },
       { name: "Scan QR", path: "/border/verify-qr", icon: "📷" },
       { name: "Watchlist", path: "/border/watchlist", icon: "🚨" },
       { name: "Overstays", path: "/border/overstay-report", icon: "⏳" },
-      { name: "Borders", path: "/borders", icon: "🗺️" },
+      { name: "5 Borders", path: "/borders", icon: "🗺️" },
     ];
   }
-  // 4. Traveler / Applicant Portal Context (Logged in as applicant or on applicant pages)
+  // 5. Traveler / Applicant Dashboard & Services Context
   else if (
     path.startsWith("/dashboard") ||
     path.startsWith("/passport") ||
@@ -53,8 +87,7 @@ export function MobileAppBottomNav() {
     path.startsWith("/status") ||
     path.startsWith("/payment") ||
     path.startsWith("/notifications") ||
-    path.startsWith("/profile") ||
-    (path === "/applicant" && profile?.role === "applicant")
+    path.startsWith("/profile")
   ) {
     tabs = [
       { name: "Dashboard", path: "/dashboard", icon: "📊" },
@@ -64,7 +97,7 @@ export function MobileAppBottomNav() {
       { name: "Profile", path: "/profile", icon: "👤" },
     ];
   }
-  // 5. Public / Gateway & Informational Pages Context (Gateway, About, Services, Borders, Contact, Applicant Landing)
+  // 6. Default Fallback
   else {
     tabs = [
       { name: "Home", path: "/", icon: "🏠", exact: true },
