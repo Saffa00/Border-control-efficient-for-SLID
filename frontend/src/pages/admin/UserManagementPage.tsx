@@ -618,11 +618,10 @@ export default function UserManagementPage() {
         const currentYear = new Date().getFullYear();
         const generatedUsername = `${nameParts.slice(0, 10)}${randomSuffix}${currentYear}`;
 
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-        let tempPassword = "";
-        for (let i = 0; i < 8; i++) {
-          tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        // Use a fixed known temp password so it actually matches the auth account
+        // The signup flow stored a random password — we generate a NEW known one and
+        // update it via admin password reset in Supabase dashboard
+        const tempPassword = `SLID-${nameParts.slice(0, 4).toUpperCase()}!${currentYear}`;
 
         // Update staff_access_requests status
         try {
@@ -632,18 +631,41 @@ export default function UserManagementPage() {
             .eq("request_id", req.request_id);
         } catch {}
 
-        // Activate user in users table
+        // Upsert user in users table with correct role and active status
         try {
-          await supabase
+          // First check if a row exists
+          const { data: existingRow } = await supabase
             .from("users")
-            .update({ is_active: true })
-            .eq("email", req.email);
+            .select("user_id")
+            .eq("email", req.email)
+            .maybeSingle();
+
+          if (existingRow) {
+            // Update existing row
+            await supabase
+              .from("users")
+              .update({
+                is_active: true,
+                role: req.requested_role,
+                full_name: req.full_name,
+              })
+              .eq("email", req.email);
+          } else {
+            // Insert new row if missing
+            await supabase.from("users").insert({
+              full_name: req.full_name,
+              email: req.email,
+              role: req.requested_role,
+              is_active: true,
+            });
+          }
         } catch {}
 
         approvedData = {
           username: generatedUsername,
           tempPassword,
           emailSent: false,
+          requiresPasswordReset: true,
         };
       }
 
