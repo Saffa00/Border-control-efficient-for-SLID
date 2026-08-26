@@ -1,9 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
+import { UserProfileMenu } from "./UserProfileMenu";
 
 export function ApplicantNavbar() {
-  const { profile, signOut } = useAuth();
   const location = useLocation();
 
   const navLinks = [
@@ -25,15 +24,15 @@ export function ApplicantNavbar() {
 
       {/* 2. Main Executive Navigation Bar */}
       <div className="border-b border-primary-light/80 bg-white/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2">
           {/* Brand & Logo */}
-          <Link to="/dashboard" className="flex items-center gap-3 group">
+          <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
             <img
               src="/slid-logo.png"
               alt="SLID Emblem"
-              className="w-11 h-11 sm:w-12 sm:h-12 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
             />
-            <div className="flex flex-col">
+            <div className="hidden md:flex flex-col">
               <div className="flex items-center gap-1.5">
                 <SierraLeoneFlag width={16} height={10} />
                 <span className="text-[9px] font-bold text-[#1E8E5A] uppercase tracking-widest leading-none">
@@ -73,42 +72,8 @@ export function ApplicantNavbar() {
             })}
           </nav>
 
-          {/* User Profile Card & Sign Out */}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/profile"
-              className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-canvas transition border border-transparent hover:border-primary-light/60"
-            >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  className="w-8 h-8 rounded-full object-cover border border-primary/30 shadow-2xs"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-[#0284C7] text-white flex items-center justify-center text-xs font-bold font-mono shadow-2xs">
-                  {profile?.full_name?.charAt(0).toUpperCase() || "A"}
-                </div>
-              )}
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-ink leading-tight">
-                  {profile?.full_name || "Applicant"}
-                </p>
-                <p className="text-[10px] text-ink-soft font-mono truncate max-w-[120px]">
-                  {profile?.email || "Verified Traveler"}
-                </p>
-              </div>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="border border-status-rejected/30 text-status-rejected hover:bg-status-rejected hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer shadow-2xs"
-            >
-              Sign out
-            </button>
-          </div>
+          {/* User Profile Menu with Avatar Upload & Sign Out Icon */}
+          <UserProfileMenu roleTheme="applicant" />
         </div>
       </div>
     </header>
