@@ -175,15 +175,8 @@ export default function AboutPage() {
               </Link>
             </div>
 
-            {/* Quick Action Button & Mobile Toggle */}
+            {/* Mobile Toggle */}
             <div className="flex items-center gap-2.5">
-              <Link
-                to="/applicant"
-                className="bg-[#1E8E5A] hover:bg-[#166E46] active:scale-95 text-white text-xs font-bold px-3.5 sm:px-4 py-2 rounded-xl transition shadow-sm inline-flex items-center gap-1.5"
-              >
-                <span>Traveler Portal</span>
-                <span className="text-xs">&rarr;</span>
-              </Link>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -233,18 +226,11 @@ export default function AboutPage() {
               >
                 Contact &amp; Directorate Directory
               </Link>
-              <div className="pt-2 border-t border-zinc-200 flex gap-2">
-                <Link
-                  to="/applicant"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 text-center bg-[#1E8E5A] text-white text-xs font-bold py-2 rounded-xl"
-                >
-                  Traveler Portal
-                </Link>
+              <div className="pt-2 border-t border-zinc-200">
                 <Link
                   to="/staff/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 text-center bg-[#0B4F6C] text-white text-xs font-bold py-2 rounded-xl"
+                  className="block text-center bg-[#0B4F6C] text-white text-xs font-bold py-2 rounded-xl"
                 >
                   Staff Sign In
                 </Link>
