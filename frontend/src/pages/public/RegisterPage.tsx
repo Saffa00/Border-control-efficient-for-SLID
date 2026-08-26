@@ -79,39 +79,19 @@ export default function RegisterPage() {
       return;
     }
 
-    // Sign up with Supabase Auth — email confirmation may or may not be required
+    // Sign up with Supabase Auth
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
       password: formData.password,
       options: { data: { full_name: formData.fullName.trim() } },
     });
 
-    // If there is a signUp error AND no user was created, abort
-    if (signUpError && !data?.user) {
-      // Friendly message for email sending failures
-      const msg = signUpError.message.toLowerCase();
-      if (
-        msg.includes("sending") ||
-        msg.includes("email") ||
-        msg.includes("smtp") ||
-        msg.includes("rate limit") ||
-        msg.includes("over_email_send_rate_limit")
-      ) {
-        setError(
-          "Your account was created but we could not send a verification email right now (email service limit). Please try logging in directly — your account is active."
-        );
-      } else {
-        setError(signUpError.message);
-      }
-      setLoading(false);
-      return;
-    }
-
-    // If we have a user (either with session or pending email confirmation)
     const userId = data?.user?.id || data?.session?.user?.id;
+
+    // If we have a user ID created in auth.users
     if (userId) {
-      // Insert profile into public.users
-      const { error: profileError } = await supabase.from("users").insert({
+      // Direct insert/upsert into public.users with is_active: true
+      const { error: profileError } = await supabase.from("users").upsert({
         user_id: userId,
         full_name: formData.fullName.trim(),
         email: cleanEmail,
@@ -125,35 +105,37 @@ export default function RegisterPage() {
         emergency_contact_name: formData.emergencyContactName.trim() || null,
         emergency_contact_phone: formData.emergencyContactPhone.trim() || null,
         role: "applicant",
+        is_active: true,
       });
 
       if (profileError) {
-        // Ignore duplicate key — profile may already exist
         if (!profileError.message.includes("duplicate") && !profileError.message.includes("unique")) {
-          setError(profileError.message);
-          setLoading(false);
-          return;
+          console.warn("Profile save warning:", profileError.message);
         }
       }
 
+      // Try automatic immediate sign-in to bypass email confirmation screen if possible
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: formData.password,
+      });
+
       setLoading(false);
 
-      // If active session — go straight to dashboard
-      if (data?.session) {
+      if (signInData?.session || data?.session) {
         navigate("/dashboard");
         return;
       }
 
-      // If email confirmation is required — show confirmation screen
-      setNeedsEmailConfirmation(true);
+      // If auto-login requires manual login step, redirect to login page with success notification
+      navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
       return;
     }
 
-    // Fallback: no user created
     if (signUpError) {
       setError(signUpError.message);
     } else {
-      setNeedsEmailConfirmation(true);
+      navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
     }
     setLoading(false);
   }

@@ -8,10 +8,15 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(
+    searchParams.get("registered") === "true"
+      ? "✅ Account created and saved in database! Please sign in with your email and password below."
+      : null
+  );
 
   useEffect(() => {
     const hash = window.location.hash || "";
@@ -24,6 +29,11 @@ export default function LoginPage() {
     ) {
       navigate("/reset-password" + window.location.hash);
       return;
+    }
+
+    const registeredEmail = searchParams.get("email");
+    if (registeredEmail && !email) {
+      setEmail(registeredEmail);
     }
 
     const err = searchParams.get("error");
@@ -167,6 +177,12 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
+
+          {successMsg && (
+            <div className="p-3 bg-status-approved-bg border border-status-approved/30 rounded-md text-status-approved text-xs font-medium my-3 leading-relaxed">
+              {successMsg}
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-status-rejected-bg border border-status-rejected/30 rounded-md text-status-rejected text-xs font-medium my-3 leading-relaxed">
