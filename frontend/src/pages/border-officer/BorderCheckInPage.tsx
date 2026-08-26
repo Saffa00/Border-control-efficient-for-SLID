@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
@@ -192,7 +193,15 @@ export default function BorderCheckInPage() {
       <main className="max-w-2xl mx-auto px-8 py-10 grid gap-6">
         {/* Lookup form */}
         <SecurityPaperPanel className="p-6">
-          <h2 className="font-display text-lg mb-4">1. Scan or enter passport</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="font-display text-lg font-bold text-ink">1. Scan or enter passport</h2>
+            <Link
+              to="/border/verify"
+              className="bg-[#1E8E5A] hover:bg-[#166E46] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+            >
+              <span>📷 Live Camera QR Scanner</span>
+            </Link>
+          </div>
           <form onSubmit={handleLookupAndAssess}>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="col-span-2">

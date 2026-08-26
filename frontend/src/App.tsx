@@ -121,9 +121,11 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={["immigration_officer", "admin"]} />}>
             <Route path="/border/check-in" element={<BorderCheckInPage />} />
             <Route path="/border/verify" element={<QRVerificationPage />} />
+            <Route path="/border/verify-qr" element={<Navigate to="/border/verify" replace />} />
             <Route path="/border/verify/:token" element={<QRVerificationPage />} />
             <Route path="/border/watchlist" element={<WatchlistPage />} />
             <Route path="/border/overstays" element={<OverstayReportPage />} />
+            <Route path="/border/overstay-report" element={<Navigate to="/border/overstays" replace />} />
           </Route>
 
           {/* Admin portal — admins only */}

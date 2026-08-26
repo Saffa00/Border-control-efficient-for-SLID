@@ -75,16 +75,18 @@ export function MobileAppBottomNav() {
   // 5. Border Officer Clearance Desk Context
   else if (
     path === "/border/check-in" ||
+    path === "/border/verify" ||
     path === "/border/verify-qr" ||
     path === "/border/watchlist" ||
+    path === "/border/overstays" ||
     path === "/border/overstay-report" ||
     path.startsWith("/border-officer")
   ) {
     tabs = [
       { name: "Check-In", path: "/border/check-in", icon: "🛂" },
-      { name: "Scan QR", path: "/border/verify-qr", icon: "📷" },
+      { name: "Scan QR", path: "/border/verify", icon: "📷" },
       { name: "Watchlist", path: "/border/watchlist", icon: "🚨" },
-      { name: "Overstays", path: "/border/overstay-report", icon: "⏳" },
+      { name: "Overstays", path: "/border/overstays", icon: "⏳" },
       { name: "5 Borders", path: "/borders", icon: "🗺️" },
     ];
   }
