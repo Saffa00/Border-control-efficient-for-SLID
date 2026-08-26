@@ -70,8 +70,8 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
             </div>
           </Link>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
+          {/* Navigation Tabs - Hidden on mobile, shown on desktop (mobile uses bottom footer dock) */}
+          <nav className="hidden md:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
             <Link
               to="/visa-officer"
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${

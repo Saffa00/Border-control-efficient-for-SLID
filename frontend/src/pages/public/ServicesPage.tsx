@@ -120,38 +120,7 @@ export default function ServicesPage() {
                 Contact
               </Link>
             </div>
-
-            {/* Mobile Toggle */}
-            <div className="flex lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 cursor-pointer"
-              >
-                {mobileMenuOpen ? "✕" : "☰"}
-              </button>
-            </div>
           </div>
-
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-zinc-200 bg-white px-4 py-4 space-y-2 shadow-lg">
-              <Link to="/" className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50">
-                🏠 Home
-              </Link>
-              <Link to="/about" className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50">
-                🏛️ About Department
-              </Link>
-              <Link to="/services" className="block text-xs font-semibold text-[#1E8E5A] p-2.5 rounded-lg bg-emerald-50">
-                📑 Statutory Services
-              </Link>
-              <Link to="/borders" className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50">
-                🗺️ Borders &amp; Checkpoints
-              </Link>
-              <Link to="/contact" className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50">
-                ✉️ Contact &amp; Headquarters
-              </Link>
-            </div>
-          )}
         </nav>
       </div>
 

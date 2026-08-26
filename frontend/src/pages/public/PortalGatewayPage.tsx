@@ -500,73 +500,7 @@ export default function PortalGatewayPage() {
                 Contact
               </Link>
             </div>
-
-            {/* Mobile Hamburger Toggle */}
-            <div className="flex lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 cursor-pointer"
-                aria-label="Toggle Navigation Menu"
-              >
-                {mobileMenuOpen ? "✕" : "☰"}
-              </button>
-            </div>
           </div>
-
-          {/* Mobile Drawer Menu */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-zinc-200 bg-white px-4 py-4 space-y-2 shadow-lg">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50"
-              >
-                🏠 Home
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50"
-              >
-                🏛️ About Department
-              </Link>
-              <Link
-                to="/services"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50"
-              >
-                📑 Statutory Services
-              </Link>
-              <Link
-                to="/borders"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50"
-              >
-                🗺️ Borders &amp; Checkpoints
-              </Link>
-              <div className="pl-4 space-y-1 py-1">
-                {CHECKPOINTS_DATA.map((cp) => (
-                  <button
-                    key={cp.id}
-                    type="button"
-                    onClick={() => handleOpenCheckpoint(cp)}
-                    className="w-full text-left text-[11px] text-[#1E8E5A] py-1 hover:underline flex items-center gap-1.5"
-                  >
-                    <span>{cp.icon}</span>
-                    <span>{cp.name}</span>
-                  </button>
-                ))}
-              </div>
-              <Link
-                to="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-zinc-800 p-2.5 rounded-lg hover:bg-zinc-50"
-              >
-                ✉️ Contact &amp; Headquarters
-              </Link>
-            </div>
-          )}
         </nav>
 
         {/* ------------------------------------------------------------- */}
