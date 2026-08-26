@@ -111,14 +111,14 @@ export default function App() {
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
 
-          {/* Visa officer portal — visa officers + admins */}
-          <Route element={<ProtectedRoute allowedRoles={["visa_officer", "admin"]} />}>
+          {/* Visa officer portal — visa officers, immigration officers + admins */}
+          <Route element={<ProtectedRoute allowedRoles={["visa_officer", "immigration_officer", "admin"]} />}>
             <Route path="/visa-officer" element={<VisaOfficerDashboard />} />
             <Route path="/visa-officer/review/:id" element={<ApplicationReviewPage />} />
           </Route>
 
-          {/* Border officer portal — immigration officers + admins */}
-          <Route element={<ProtectedRoute allowedRoles={["immigration_officer", "admin"]} />}>
+          {/* Border officer portal — immigration officers, visa officers + admins */}
+          <Route element={<ProtectedRoute allowedRoles={["immigration_officer", "visa_officer", "admin"]} />}>
             <Route path="/border/check-in" element={<BorderCheckInPage />} />
             <Route path="/border/verify" element={<QRVerificationPage />} />
             <Route path="/border/verify-qr" element={<Navigate to="/border/verify" replace />} />
