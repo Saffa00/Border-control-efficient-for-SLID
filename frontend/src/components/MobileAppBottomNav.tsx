@@ -13,8 +13,13 @@ export function MobileAppBottomNav() {
     exact?: boolean;
   }
 
-  // 1. Explicitly HIDE mobile bottom navigation on all role onboarding landing pages & auth pages
-  const isStandaloneLandingOrAuth = [
+  // 1. Explicitly HIDE mobile bottom navigation on all public institutional pages, landing pages & auth pages
+  const isPublicOrAuthPage = [
+    "/",
+    "/about",
+    "/services",
+    "/borders",
+    "/contact",
     "/applicant",
     "/visa/portal",
     "/border/portal",
@@ -29,32 +34,14 @@ export function MobileAppBottomNav() {
     "/unauthorized",
   ].includes(path);
 
-  if (isStandaloneLandingOrAuth) {
-    return null; // No footer dock on onboarding / landing / login screens
+  if (isPublicOrAuthPage) {
+    return null; // No footer dock on public pages, onboarding, landing, or login screens
   }
 
   let tabs: TabItem[] = [];
 
-  // 2. Main Public Gateway & 5 Information Pages Context
-  const isPublicInfoPage = [
-    "/",
-    "/about",
-    "/services",
-    "/borders",
-    "/contact",
-  ].includes(path);
-
-  if (isPublicInfoPage) {
-    tabs = [
-      { name: "Home", path: "/", icon: "🏠", exact: true },
-      { name: "About", path: "/about", icon: "🏛️" },
-      { name: "Services", path: "/services", icon: "📋" },
-      { name: "Borders", path: "/borders", icon: "🗺️" },
-      { name: "Contact", path: "/contact", icon: "✉️" },
-    ];
-  }
-  // 3. Admin Executive Portal Context (Signed In / Navigating Admin)
-  else if (path.startsWith("/admin")) {
+  // 2. Admin Executive Portal Context (Signed In / Navigating Admin)
+  if (path.startsWith("/admin")) {
     tabs = [
       { name: "Overview", path: "/admin", icon: "📊", exact: true },
       { name: "Users", path: "/admin/users", icon: "👥" },
