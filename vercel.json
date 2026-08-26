@@ -8,8 +8,9 @@
       "destination": "https://sl-immigration-backend.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
 }
+
