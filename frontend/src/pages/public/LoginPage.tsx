@@ -53,7 +53,7 @@ export default function LoginPage() {
     if (signInError) {
       setError(
         signInError.message === "Invalid login credentials"
-          ? "Incorrect email or password."
+          ? "Incorrect email or password. If you just confirmed your email, please wait a moment then try again."
           : signInError.message
       );
       setLoading(false);
@@ -61,11 +61,38 @@ export default function LoginPage() {
     }
 
     // Look up role directly in public.users
-    const { data: userRow } = await supabase
+    let { data: userRow } = await supabase
       .from("users")
       .select("role, is_active, email")
       .eq("user_id", data.user.id)
-      .single();
+      .maybeSingle();
+
+    // If profile not found by user_id, try by email
+    if (!userRow && data.user.email) {
+      const { data: byEmail } = await supabase
+        .from("users")
+        .select("role, is_active, email")
+        .eq("email", data.user.email.trim().toLowerCase())
+        .maybeSingle();
+      userRow = byEmail;
+    }
+
+    // If still no profile — auto-create one (email-confirmed account that missed profile insert)
+    if (!userRow) {
+      const fullName =
+        data.user.user_metadata?.full_name ||
+        data.user.email?.split("@")[0] ||
+        "Applicant";
+      await supabase.from("users").insert({
+        user_id: data.user.id,
+        full_name: fullName,
+        email: data.user.email ?? "",
+        role: "applicant",
+      });
+      setLoading(false);
+      navigate("/dashboard");
+      return;
+    }
 
     if (userRow && !userRow.is_active) {
       setError("This account has been suspended. Contact SLID for assistance.");
