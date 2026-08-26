@@ -388,35 +388,25 @@ export default function PortalGatewayPage() {
         {/* ------------------------------------------------------------- */}
         <nav className="border-b border-zinc-200/90 bg-white/95 backdrop-blur-md sticky top-0 shadow-xs">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            {/* Clean Logo without artificial background shape */}
-            <Link to="/" className="flex items-center gap-3.5 group flex-shrink-0">
+            {/* Clean Logo with official title writings */}
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group flex-shrink-0">
               <img
                 src="/slid-logo.png"
                 alt="Sierra Leone Immigration Department Crest"
-                className="w-12 h-12 sm:w-16 sm:h-16 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+                className="w-11 h-11 sm:w-16 sm:h-16 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300 flex-shrink-0"
               />
-              <div className="hidden sm:flex flex-col">
-                <span className="text-[10px] font-bold text-[#1E8E5A] uppercase tracking-widest leading-none mb-1">
+              <div className="flex flex-col">
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#1E8E5A] uppercase tracking-wider sm:tracking-widest leading-none mb-0.5 sm:mb-1">
                   Republic of Sierra Leone
                 </span>
-                <span className="text-lg sm:text-xl font-bold text-[#0F172A] tracking-tight leading-tight group-hover:text-[#1E8E5A] transition">
+                <span className="text-sm sm:text-xl font-bold text-[#0F172A] tracking-tight leading-tight group-hover:text-[#1E8E5A] transition">
                   Department of Immigration
                 </span>
-                <span className="text-[11px] text-zinc-500 font-medium">
+                <span className="text-[10px] sm:text-[11px] text-zinc-500 font-medium leading-none mt-0.5">
                   Sierra Leone Immigration Department (SLID)
                 </span>
               </div>
             </Link>
-
-            {/* Mobile Top Quick Action */}
-            <div className="flex lg:hidden items-center gap-2">
-              <Link
-                to="/applicant"
-                className="bg-[#0B4F6C] active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs"
-              >
-                Traveler Portal
-              </Link>
-            </div>
 
             {/* Standard Nav Items: Home, About, Services, Borders [Dropdown], Contact */}
             <div className="hidden lg:flex items-center gap-1 xl:gap-2">
