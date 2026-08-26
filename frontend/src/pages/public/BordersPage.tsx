@@ -315,69 +315,7 @@ export default function BordersPage() {
                 Contact
               </Link>
             </div>
-
-            {/* Mobile Toggle */}
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 rounded-xl border border-zinc-300 text-zinc-700 hover:bg-zinc-100 transition cursor-pointer"
-                aria-label="Toggle Mobile Menu"
-              >
-                <span className="text-lg">{mobileMenuOpen ? "✕" : "☰"}</span>
-              </button>
-            </div>
           </div>
-
-          {/* Mobile Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-zinc-200 bg-white/98 px-4 py-4 space-y-2 shadow-lg animate-fade-in">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] p-2 rounded-lg hover:bg-zinc-100"
-              >
-                Home
-              </Link>
-              <Link
-                to="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] p-2 rounded-lg hover:bg-zinc-100"
-              >
-                About Institutional Mandate
-              </Link>
-              <Link
-                to="/services"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] p-2 rounded-lg hover:bg-zinc-100"
-              >
-                Statutory Public Services
-              </Link>
-              <Link
-                to="/borders"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-bold text-[#1E8E5A] bg-[#1E8E5A]/10 p-2 rounded-lg"
-              >
-                Borders &amp; Checkpoints
-              </Link>
-              <Link
-                to="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] p-2 rounded-lg hover:bg-zinc-100"
-              >
-                Contact &amp; Directorate Directory
-              </Link>
-              <div className="pt-2 border-t border-zinc-200">
-                <Link
-                  to="/staff/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center bg-[#0B4F6C] text-white text-xs font-bold py-2 rounded-xl"
-                >
-                  Staff Sign In
-                </Link>
-              </div>
-            </div>
-          )}
         </nav>
       </div>
 
