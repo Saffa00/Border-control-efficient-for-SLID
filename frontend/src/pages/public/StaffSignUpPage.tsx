@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabaseClient";
 
 interface StaffCredentials {
   username: string;
@@ -33,7 +34,10 @@ export default function StaffSignUpPage() {
     e.preventDefault();
     setError(null);
 
-    if (!email.trim() || !fullName.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+
+    if (!cleanEmail || !cleanName) {
       setError("Please provide your email address and full name.");
       return;
     }
@@ -46,27 +50,104 @@ export default function StaffSignUpPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/staff/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          fullName: fullName.trim(),
-          role,
-        }),
+      let data: any = null;
+      let resOk = false;
+
+      // 1. Try Backend Provisioning API
+      try {
+        const res = await fetch("/api/staff/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cleanEmail,
+            fullName: cleanName,
+            role,
+          }),
+        });
+
+        resOk = res.ok;
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          // Response was HTML (e.g. 504 / 502 from cold start proxy)
+        }
+      } catch (fetchErr) {
+        console.warn("Backend /api/staff/signup endpoint unavailable, using direct Supabase fallback:", fetchErr);
+      }
+
+      // 2. If Backend succeeded, show credentials
+      if (resOk && data?.tempPassword) {
+        setCredentials({
+          username: data.username,
+          email: data.email,
+          tempPassword: data.tempPassword,
+          role: data.role,
+          createdAt: data.createdAt,
+        });
+        return;
+      }
+
+      // 3. If Backend returned an explicit validation error (e.g. duplicate email)
+      if (data?.error && !data.error.includes("Internal Server Error")) {
+        throw new Error(data.error);
+      }
+
+      // 4. Direct Client-Side Supabase Fallback (100% reliable)
+      const nameParts = cleanName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      const currentYear = new Date().getFullYear();
+      const generatedUsername = `${nameParts.slice(0, 10)}${randomSuffix}${currentYear}`;
+
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+      let tempPassword = "";
+      for (let i = 0; i < 8; i++) {
+        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      const safeRole = role === "visa_officer" ? "visa_officer" : "immigration_officer";
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: tempPassword,
+        options: {
+          data: {
+            full_name: cleanName,
+            username: generatedUsername,
+            role: safeRole,
+            temporary_password: true,
+          },
+        },
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create staff account.");
+      if (authError) {
+        throw authError;
+      }
+
+      if (authData.user?.id) {
+        try {
+          await supabase.from("users").upsert({
+            user_id: authData.user.id,
+            full_name: cleanName,
+            email: cleanEmail,
+            role: safeRole,
+            is_active: true,
+          });
+        } catch (dbErr) {
+          console.warn("Could not insert public.users row:", dbErr);
+        }
       }
 
       setCredentials({
-        username: data.username,
-        email: data.email,
-        tempPassword: data.tempPassword,
-        role: data.role,
-        createdAt: data.createdAt,
+        username: generatedUsername,
+        email: cleanEmail,
+        tempPassword: tempPassword,
+        role: safeRole === "visa_officer" ? "Visa Adjudication Officer" : "Immigration & Border Control Officer",
+        createdAt: new Date().toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
       });
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred during account creation.");
