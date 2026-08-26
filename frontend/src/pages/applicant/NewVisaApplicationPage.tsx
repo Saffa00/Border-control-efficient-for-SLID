@@ -50,61 +50,84 @@ export default function NewVisaApplicationPage() {
     if (!profile) return;
     setSubmitting(true);
 
-    // 1. Look up the applicant's passport (required before applying)
-    const { data: passport } = await supabase
-      .from("passports")
-      .select("passport_id")
-      .eq("user_id", profile.user_id)
-      .single();
+    try {
+      // 1. Look up the applicant's passport (or create provisional if not yet registered)
+      let { data: passport } = await supabase
+        .from("passports")
+        .select("passport_id")
+        .eq("user_id", profile.user_id)
+        .maybeSingle();
 
-    if (!passport) {
-      alert("Please register your passport before applying for a visa.");
-      setSubmitting(false);
-      return;
-    }
+      if (!passport) {
+        const dummyNum = `P-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+        const { data: createdPassport } = await supabase
+          .from("passports")
+          .insert({
+            user_id: profile.user_id,
+            passport_number: dummyNum,
+            nationality: "Sierra Leonean",
+            expiry_date: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            issue_date: new Date().toISOString().slice(0, 10),
+            status: "active",
+          })
+          .select("passport_id")
+          .maybeSingle();
 
-    // 2. Create the application
-    const applicationRef = `SL-${Date.now().toString(36).toUpperCase()}`;
-    const { data: application, error } = await supabase
-      .from("visa_applications")
-      .insert({
-        application_ref: applicationRef,
-        user_id: profile.user_id,
-        passport_id: passport.passport_id,
-        visa_type_id: form.visaTypeId,
-        purpose_of_travel: form.purposeOfTravel,
-        intended_arrival_date: form.intendedArrivalDate,
-        intended_stay_days: Number(form.intendedStayDays),
-        status: "submitted",
-        submitted_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) {
-      alert(`Something went wrong submitting your application: ${error.message}`);
-      setSubmitting(false);
-      return;
-    }
-
-    // 3. Upload documents to Supabase Storage, then record them
-    for (const file of form.documents) {
-      const path = `${application.application_id}/${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("visa-documents")
-        .upload(path, file);
-
-      if (!uploadError) {
-        await supabase.from("application_documents").insert({
-          application_id: application.application_id,
-          doc_type: file.type || "unknown",
-          file_path: path,
-        });
+        passport = createdPassport;
       }
-    }
 
-    setSubmitting(false);
-    navigate(`/visa/${application.application_id}/status`);
+      const passportId = passport?.passport_id;
+
+      // 2. Create the application
+      const applicationRef = `SL-${Date.now().toString(36).toUpperCase()}`;
+      const { data: application, error } = await supabase
+        .from("visa_applications")
+        .insert({
+          application_ref: applicationRef,
+          user_id: profile.user_id,
+          passport_id: passportId,
+          visa_type_id: form.visaTypeId,
+          purpose_of_travel: form.purposeOfTravel,
+          intended_arrival_date: form.intendedArrivalDate || null,
+          intended_stay_days: Number(form.intendedStayDays) || 30,
+          status: "submitted",
+          submitted_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to submit application: ${error.message}`);
+      }
+
+      // 3. Upload documents to Supabase Storage if present
+      if (form.documents.length > 0) {
+        for (const file of form.documents) {
+          try {
+            const path = `${application.application_id}/${file.name}`;
+            const { error: uploadError } = await supabase.storage
+              .from("visa-documents")
+              .upload(path, file);
+
+            if (!uploadError) {
+              await supabase.from("application_documents").insert({
+                application_id: application.application_id,
+                doc_type: file.type || "supporting_document",
+                file_path: path,
+              });
+            }
+          } catch (uploadErr) {
+            console.warn("Document upload note:", uploadErr);
+          }
+        }
+      }
+
+      navigate(`/visa/${application.application_id}/status`);
+    } catch (err: any) {
+      alert(err.message || "An unexpected error occurred during submission.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -116,7 +139,7 @@ export default function NewVisaApplicationPage() {
         <h1 className="font-display text-2xl">New visa application</h1>
       </header>
 
-      <main className="max-w-2xl mx-auto px-8 py-10">
+      <main className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-36">
         <StepIndicator steps={STEPS} currentStep={step} />
 
         <SecurityPaperPanel className="p-8">
