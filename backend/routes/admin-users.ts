@@ -269,23 +269,44 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
   const requestingUserId = (req.user?.id || req.profile?.user_id) as string;
 
   try {
-    // 1. Fetch the access request
-    const { data: staffReq, error: reqError } = await supabaseAdmin
-      .from("staff_access_requests")
-      .select("*, checkpoints(name)")
-      .eq("request_id", requestId)
-      .single();
+    // 1. Fetch user or access request
+    let targetUser: any = null;
 
-    if (reqError || !staffReq) {
-      return res.status(404).json({ error: "Staff access request not found" });
+    // Check if requestId is a user_id from public.users
+    const { data: userRow } = await supabaseAdmin
+      .from("users")
+      .select("user_id, full_name, email, role, phone, is_active")
+      .eq("user_id", requestId)
+      .maybeSingle();
+
+    if (userRow) {
+      targetUser = {
+        user_id: userRow.user_id,
+        full_name: userRow.full_name,
+        email: userRow.email,
+        requested_role: userRow.role,
+        phone: userRow.phone,
+        duty_station: "Freetown National Headquarters",
+      };
+    } else {
+      // Check staff_access_requests
+      const { data: staffReq } = await supabaseAdmin
+        .from("staff_access_requests")
+        .select("*, checkpoints(name)")
+        .eq("request_id", requestId)
+        .maybeSingle();
+
+      if (staffReq) {
+        targetUser = staffReq;
+      }
     }
 
-    if (staffReq.status === "approved") {
-      return res.status(400).json({ error: "This request has already been approved." });
+    if (!targetUser) {
+      return res.status(404).json({ error: "Staff record not found." });
     }
 
     // 2. Generate clean official username & high-entropy temporary password
-    const nameParts = staffReq.full_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const nameParts = targetUser.full_name.toLowerCase().replace(/[^a-z0-9]/g, "");
     const randomSuffix = crypto.randomBytes(2).toString("hex");
     const currentYear = new Date().getFullYear();
     const generatedUsername = `${nameParts.slice(0, 10)}${randomSuffix}${currentYear}`;
@@ -297,75 +318,98 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       tempPassword += chars[randomBytes[i] % chars.length];
     }
 
-    // 3. Create the Supabase auth user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: staffReq.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: staffReq.full_name,
-        username: generatedUsername,
-        temporary_password: true,
-      },
-    });
+    let newUserId = targetUser.user_id;
 
-    if (authError) throw authError;
-    const newUserId = authData.user.id;
+    // 3. Create or Update the Supabase auth user
+    if (newUserId) {
+      // Update existing auth user password
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(newUserId, {
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: targetUser.full_name,
+            username: generatedUsername,
+            temporary_password: true,
+          },
+        });
+      } catch (authUpErr) {
+        console.warn("Auth user update notice:", authUpErr);
+      }
+    } else {
+      // Create new auth user
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: targetUser.email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: targetUser.full_name,
+          username: generatedUsername,
+          temporary_password: true,
+        },
+      });
 
-    // 4. Create public.users row
-    const { error: profileError } = await supabaseAdmin.from("users").insert({
+      if (authError) throw authError;
+      newUserId = authData.user.id;
+    }
+
+    // 4. Update or Insert public.users row with is_active = true
+    await supabaseAdmin.from("users").upsert({
       user_id: newUserId,
-      full_name: staffReq.full_name,
-      email: staffReq.email,
-      phone: staffReq.phone || null,
-      role: staffReq.requested_role,
+      full_name: targetUser.full_name,
+      email: targetUser.email,
+      phone: targetUser.phone || null,
+      role: targetUser.requested_role || targetUser.role || "immigration_officer",
       is_active: true,
     });
-    if (profileError) throw profileError;
 
     // 5. Create public.staff_profiles row
-    const staffIdCode = staffReq.badge_number || `SLID-${Date.now().toString(36).toUpperCase()}`;
-    const dutyStationName = (staffReq.checkpoints as any)?.name || staffReq.duty_station || "National Headquarters";
+    const staffIdCode = targetUser.badge_number || `SLID-${Date.now().toString(36).toUpperCase()}`;
+    const dutyStationName = (targetUser.checkpoints as any)?.name || targetUser.duty_station || "Freetown National Headquarters";
 
-    const { error: staffError } = await supabaseAdmin.from("staff_profiles").insert({
-      user_id: newUserId,
-      staff_id_code: staffIdCode,
-      rank_title: staffReq.rank_title || "Officer",
-      department: staffReq.department || (staffReq.requested_role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance"),
-      duty_station: dutyStationName,
-      checkpoint_id: staffReq.checkpoint_id || null,
-      issue_date: new Date().toISOString().slice(0, 10),
-      expiry_date: new Date(new Date().setFullYear(new Date().getFullYear() + 3))
-        .toISOString()
-        .slice(0, 10),
-      status: "Active",
-    });
-    if (staffError) throw staffError;
+    try {
+      await supabaseAdmin.from("staff_profiles").upsert({
+        user_id: newUserId,
+        staff_id_code: staffIdCode,
+        rank_title: targetUser.rank_title || "Officer",
+        department: targetUser.department || (targetUser.requested_role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance"),
+        duty_station: dutyStationName,
+        issue_date: new Date().toISOString().slice(0, 10),
+        expiry_date: new Date(new Date().setFullYear(new Date().getFullYear() + 3))
+          .toISOString()
+          .slice(0, 10),
+        status: "Active",
+      });
+    } catch (sErr) {
+      console.warn("staff_profiles upsert notice:", sErr);
+    }
 
-    // 6. Update request status to 'approved'
-    await supabaseAdmin
-      .from("staff_access_requests")
-      .update({
-        status: "approved",
-        reviewed_by: requestingUserId,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("request_id", requestId);
+    // 6. Update request status to 'approved' if it was in staff_access_requests
+    try {
+      await supabaseAdmin
+        .from("staff_access_requests")
+        .update({
+          status: "approved",
+          reviewed_by: requestingUserId,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("request_id", requestId);
+    } catch {}
 
     // 7. Send real official credentials welcome email via Resend
     const loginUrl = "https://border-control-efficient-for-slid.vercel.app/staff/login";
     const emailHtml = staffWelcomeCredentialsEmail(
-      staffReq.full_name,
-      staffReq.email,
+      targetUser.full_name,
+      targetUser.email,
       generatedUsername,
       tempPassword,
-      staffReq.requested_role,
+      targetUser.requested_role || targetUser.role || "immigration_officer",
       loginUrl
     );
 
     const emailRes = await sendEmail({
       userId: newUserId,
-      to: staffReq.email,
+      to: targetUser.email,
       subject: "🔒 Official Staff Account Approved & Login Credentials — Sierra Leone Immigration Department",
       html: emailHtml,
     });
@@ -377,9 +421,9 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       target_type: "users",
       target_id: newUserId,
       details: JSON.stringify({
-        email: staffReq.email,
+        email: targetUser.email,
         username: generatedUsername,
-        role: staffReq.requested_role,
+        role: targetUser.requested_role || targetUser.role,
         dutyStation: dutyStationName,
         emailSent: emailRes.success,
       }),
