@@ -178,9 +178,9 @@ router.post("/api/auth/request-password-reset", async (req, res) => {
   const cleanEmail = email.trim().toLowerCase();
   
   // Choose safe redirect: if frontend sent a localhost url but backend is running in production, prefer live url
-  let targetRedirect = redirectUrl || "https://sl-immigration-system.vercel.app/reset-password";
+  let targetRedirect = redirectUrl || "https://border-control-efficient-for-slid.vercel.app/reset-password";
   if (targetRedirect.includes("localhost") && process.env.NODE_ENV === "production") {
-    targetRedirect = "https://sl-immigration-system.vercel.app/reset-password";
+    targetRedirect = "https://border-control-efficient-for-slid.vercel.app/reset-password";
   }
 
   try {

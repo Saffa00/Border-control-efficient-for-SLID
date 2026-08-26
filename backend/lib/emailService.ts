@@ -93,7 +93,7 @@ export function passwordResetEmail(resetUrl: string, recipientName?: string) {
       </div>
 
       <div style="background-color: #061826; padding: 28px 24px; text-align: center; color: #FFFFFF;">
-        <img src="https://sl-immigration-system.vercel.app/slid-logo.png" alt="SLID Crest" width="68" height="68" style="margin: 0 auto 12px; display: block; border-radius: 50%;" />
+        <img src="https://border-control-efficient-for-slid.vercel.app/slid-logo.png" alt="SLID Crest" width="68" height="68" style="margin: 0 auto 12px; display: block; border-radius: 50%;" />
         <p style="color: #10B981; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 4px;">Republic of Sierra Leone</p>
         <h1 style="color: #FFFFFF; font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Department of Immigration</h1>
         <p style="color: #94A3B8; font-size: 11px; margin: 4px 0 0;">Sierra Leone Immigration Department (SLID)</p>
@@ -147,7 +147,7 @@ export function visaApprovedEmail(fullName: string, applicationRef: string, visa
           <p style="margin: 0; font-size: 13px;">Valid Until: <strong>${expiryDate}</strong></p>
         </div>
         <div style="text-align: center; margin: 24px 0;">
-          <a href="https://sl-immigration-system.vercel.app/dashboard" style="background-color: #1E8E5A; color: #FFFFFF; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 6px; display: inline-block;">
+          <a href="https://border-control-efficient-for-slid.vercel.app/dashboard" style="background-color: #1E8E5A; color: #FFFFFF; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 6px; display: inline-block;">
             Download Visa &amp; QR Certificate &rarr;
           </a>
         </div>
@@ -230,7 +230,7 @@ export function staffAccountApprovedEmail(
   loginUrl?: string
 ) {
   const isDetailed = !!loginUrl;
-  const safeLoginUrl = loginUrl || tempPasswordOrLoginUrl || "https://sl-immigration-system.vercel.app/staff/login";
+  const safeLoginUrl = loginUrl || tempPasswordOrLoginUrl || "https://border-control-efficient-for-slid.vercel.app/staff/login";
   const userRole = role || emailOrRole || "immigration_officer";
   const roleLabel =
     userRole === "admin"
