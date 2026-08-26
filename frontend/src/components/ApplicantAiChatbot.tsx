@@ -475,7 +475,7 @@ export function ApplicantAiChatbot() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-['Tahoma']">
+    <div className="fixed bottom-20 right-3.5 sm:bottom-6 sm:right-6 z-50 font-['Tahoma']">
       {/* 1. Right-Hand Floating Chatbot Launcher with Green, White & Blue Tricolour Logo */}
       {!isOpen && (
         <div className="relative group flex items-center justify-end">
@@ -488,25 +488,25 @@ export function ApplicantAiChatbot() {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="relative flex items-center justify-center w-15 h-15 rounded-full bg-[#0A1220] border-2 border-emerald-500/50 shadow-2xl hover:shadow-emerald-900/60 transition transform hover:scale-110 active:scale-95 cursor-pointer overflow-hidden p-0.5 group-hover:border-emerald-400"
+            className="relative flex items-center justify-center w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-[#0A1220] border-2 border-emerald-500/50 shadow-2xl hover:shadow-emerald-900/60 transition transform hover:scale-110 active:scale-95 cursor-pointer overflow-hidden p-0.5 group-hover:border-emerald-400"
             title="Chat with Salone Immigration AI"
             aria-label="Open Immigration AI Virtual Assistant"
           >
-            <div className="absolute inset-0 rounded-full p-[2.5px] bg-gradient-to-b from-[#1EB53A] via-white to-[#0072C6]">
+            <div className="absolute inset-0 rounded-full p-[2px] bg-gradient-to-b from-[#1EB53A] via-white to-[#0072C6]">
               <div className="w-full h-full bg-[#070D18] rounded-full flex items-center justify-center">
-                <SaloneChatbotBadgeIcon size={46} />
+                <SaloneChatbotBadgeIcon size={40} />
               </div>
             </div>
 
             {/* Online Green Pulsing Beacon */}
-            <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-[#0A1220] animate-pulse"></span>
+            <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-[#22C55E] border-2 border-[#0A1220] animate-pulse"></span>
           </button>
         </div>
       )}
 
       {/* 2. ChatGPT-Style Interactive Chat Window */}
       {isOpen && (
-        <div className="bg-white border border-primary-light rounded-2xl shadow-2xl w-[92vw] sm:w-[410px] h-[580px] flex flex-col overflow-hidden animate-slide-up">
+        <div className="bg-white border border-primary-light rounded-2xl shadow-2xl w-[94vw] sm:w-[410px] h-[80vh] sm:h-[580px] max-h-[640px] flex flex-col overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="bg-primary text-white p-3.5 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
