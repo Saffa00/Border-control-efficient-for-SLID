@@ -44,51 +44,74 @@ export default function StaffSignUpPage() {
     setLoading(true);
 
     try {
-      // 1. Direct check in public.users to see if account already exists
+      // 1. Check if user already exists in public directory
       const { data: existingUser } = await supabase
         .from("users")
-        .select("email, role")
+        .select("email, role, is_active")
         .eq("email", cleanEmail)
         .maybeSingle();
 
       if (existingUser) {
-        throw new Error(
-          `An active account already exists for ${cleanEmail} (${existingUser.role?.replace("_", " ")}). Please sign in at /staff/login.`
-        );
+        if (existingUser.is_active) {
+          throw new Error(
+            `An active staff account already exists for ${cleanEmail} (${existingUser.role?.replace("_", " ")}). Please sign in at /staff/login.`
+          );
+        } else {
+          // Already pending clearance
+          setSubmittedRequest({
+            fullName: cleanName,
+            email: cleanEmail,
+            role: role === "visa_officer" ? "Visa Adjudication Officer" : "Immigration & Border Control Officer",
+            submittedAt: new Date().toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+          });
+          setLoading(false);
+          return;
+        }
       }
 
-      // 2. Check if a pending request already exists in staff_access_requests
-      const { data: existingReq } = await supabase
-        .from("staff_access_requests")
-        .select("status")
-        .eq("email", cleanEmail)
-        .eq("status", "pending")
-        .maybeSingle();
+      // 2. Call backend signup with 5s timeout
+      let backendSuccess = false;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch("/api/staff/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cleanEmail,
+            fullName: cleanName,
+            role: role,
+            phone: cleanPhone || undefined,
+            dutyStation: dutyStation,
+          }),
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId));
 
-      if (existingReq) {
-        throw new Error(
-          `A registration request for ${cleanEmail} is already pending administrative review. You will receive an email once approved.`
-        );
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          if (res.ok && data.success) {
+            backendSuccess = true;
+          } else if (!res.ok && data.error) {
+            if (data.error.includes("already exists")) {
+              throw new Error(data.error);
+            }
+          }
+        } catch (jsonErr: any) {
+          if (jsonErr.message && jsonErr.message.includes("already exists")) throw jsonErr;
+        }
+      } catch (backendErr: any) {
+        if (backendErr.message && backendErr.message.includes("already exists")) {
+          throw backendErr;
+        }
       }
 
-      // 3. Insert into staff_access_requests
-      const { error: insertError } = await supabase
-        .from("staff_access_requests")
-        .insert({
-          full_name: cleanName,
-          email: cleanEmail,
-          phone: cleanPhone || null,
-          requested_role: role,
-          rank_title: "Officer",
-          department: role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance",
-          duty_station: dutyStation,
-          status: "pending",
-        });
-
-      if (insertError) {
-        console.warn("Direct staff_access_requests insert notice:", insertError.message);
-        
-        // Fallback: create pending user via auth/users with is_active = false
+      // 3. Client-side registration attempt if backend was sleeping
+      if (!backendSuccess) {
         try {
           const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
           let tempPw = "";
@@ -96,7 +119,7 @@ export default function StaffSignUpPage() {
             tempPw += chars.charAt(Math.floor(Math.random() * chars.length));
           }
 
-          const { data: authData } = await supabase.auth.signUp({
+          await supabase.auth.signUp({
             email: cleanEmail,
             password: tempPw,
             options: {
@@ -107,22 +130,10 @@ export default function StaffSignUpPage() {
               },
             },
           });
-
-          if (authData.user?.id) {
-            await supabase.from("users").upsert({
-              user_id: authData.user.id,
-              full_name: cleanName,
-              email: cleanEmail,
-              role: role as any,
-              phone: cleanPhone || null,
-              is_active: false, // Marked as pending approval
-            });
-          }
-        } catch (fbErr) {
-          console.warn("Fallback user creation notice:", fbErr);
-        }
+        } catch {}
       }
 
+      // Success confirmation state
       setSubmittedRequest({
         fullName: cleanName,
         email: cleanEmail,
