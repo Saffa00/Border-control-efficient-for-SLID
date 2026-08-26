@@ -495,71 +495,97 @@ export function ApplicantAiChatbot() {
 
       {/* 2. ChatGPT-Style Full-Screen Mobile / Floating Desktop Chat Window */}
       {isOpen && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-50 font-['Tahoma'] flex flex-col justify-end sm:block">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 z-[9999] font-['Tahoma'] flex flex-col justify-end sm:block pointer-events-auto">
           {/* Backdrop on mobile */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs sm:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs sm:hidden"
             onClick={() => setIsOpen(false)}
           />
 
           <div className="relative z-10 bg-white sm:border sm:border-primary-light sm:rounded-2xl shadow-2xl w-full sm:w-[420px] h-[100dvh] sm:h-[590px] flex flex-col overflow-hidden animate-slide-up">
-          {/* Header */}
-          <div className="bg-primary text-white p-3.5 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2.5">
-              <SaloneChatbotBadgeIcon size={32} />
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <SierraLeoneFlag width={14} height={9} />
-                  <p className="text-xs font-bold leading-tight">Salone Immigration AI</p>
+            {/* Header with iOS/Android Notch Safe Area Padding */}
+            <div className="bg-primary text-white pt-12 sm:pt-3.5 pb-3 px-4 flex items-center justify-between shadow-xs flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="sm:hidden text-white/90 hover:text-white p-1 -ml-1 flex items-center justify-center active:scale-90 cursor-pointer"
+                  aria-label="Back / Close chat"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+
+                <SaloneChatbotBadgeIcon size={32} />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <SierraLeoneFlag width={14} height={9} />
+                    <p className="text-xs font-bold leading-tight">Salone Immigration AI</p>
+                  </div>
+                  <p className="text-[10px] text-white/80 font-mono flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                    ChatGPT-Style Gemini AI ✦
+                  </p>
                 </div>
-                <p className="text-[10px] text-white/80 font-mono flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
-                  ChatGPT-Style Gemini AI ✦
-                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowKeyModal(!showKeyModal)}
+                  title="Configure Gemini API Key"
+                  className="text-white/90 hover:text-white text-xs px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
+                >
+                  ⚙️ Key
+                </button>
+                <button
+                  onClick={() =>
+                    setMessages([
+                      {
+                        id: "welcome-msg",
+                        role: "assistant",
+                        content:
+                          "Chat conversation reset! I am Salone Immigration Assistant 🇸🇱. How can I assist your visa, passport, or travel requirements today?",
+                        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                      },
+                    ])
+                  }
+                  title="New Chat"
+                  className="text-white/90 hover:text-white text-xs px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
+                >
+                  ↻ New
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(false);
+                  }}
+                  className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 text-white text-base font-bold flex items-center justify-center transition cursor-pointer ml-1"
+                  title="Close chat"
+                  aria-label="Close chat"
+                >
+                  ✕
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setShowKeyModal(!showKeyModal)}
-                title="Configure Gemini API Key"
-                className="text-white/80 hover:text-white text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition cursor-pointer"
-              >
-                ⚙️ Key
-              </button>
-              <button
-                onClick={() =>
-                  setMessages([
-                    {
-                      id: "welcome-msg",
-                      role: "assistant",
-                      content:
-                        "Chat conversation reset! I am Salone Immigration Assistant 🇸🇱. How can I assist your visa, passport, or travel requirements today?",
-                      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                    },
-                  ])
-                }
-                title="New Chat"
-                className="text-white/70 hover:text-white text-xs px-2 py-1 rounded cursor-pointer"
-              >
-                ↻ New
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white text-lg font-bold p-1 cursor-pointer"
-                title="Close chat"
-              >
-                ✕
-              </button>
+            {/* National Tri-Color Accent Line (Green - White - Blue) */}
+            <div className="h-1.5 w-full grid grid-cols-3 flex-shrink-0">
+              <div className="bg-[#1EB53A]"></div>
+              <div className="bg-white"></div>
+              <div className="bg-[#0072C6]"></div>
             </div>
-          </div>
-
-          {/* National Tri-Color Accent Line (Green - White - Blue) */}
-          <div className="h-1.5 w-full grid grid-cols-3">
-            <div className="bg-[#1EB53A]"></div>
-            <div className="bg-white"></div>
-            <div className="bg-[#0072C6]"></div>
-          </div>
 
           {/* API Key Modal */}
           {showKeyModal && (
@@ -708,7 +734,7 @@ export function ApplicantAiChatbot() {
           )}
 
           {/* ChatGPT-Style Multi-line Auto-expanding Input Box */}
-          <div className="p-3 bg-white border-t border-primary-light">
+          <div className="p-3 pb-7 sm:pb-3 bg-white border-t border-primary-light flex-shrink-0">
             <div className="relative flex items-end bg-canvas/60 border border-primary-light rounded-2xl px-3.5 py-2 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary transition">
               <textarea
                 ref={textareaRef}
