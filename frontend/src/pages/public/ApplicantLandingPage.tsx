@@ -42,27 +42,48 @@ export default function ApplicantLandingPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="text-ink-soft hover:text-ink text-xs font-semibold px-3 py-2 rounded-lg hover:bg-canvas transition"
-            >
-              &larr; Main Gateway
-            </Link>
+          {/* Top Header Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/login"
-              className="text-primary hover:text-primary-dark text-xs font-semibold px-3.5 py-2 rounded-lg border border-primary-light hover:bg-primary-light/30 transition"
+              className="text-primary hover:text-primary-dark text-xs font-bold px-3 py-2 rounded-xl border border-primary-light bg-white hover:bg-primary-light/30 transition shadow-2xs"
             >
-              Applicant Sign In
+              Sign In
             </Link>
             <Link
               to="/register"
-              className="bg-accent text-white text-xs font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition shadow-xs flex items-center gap-1.5"
+              className="bg-accent hover:opacity-90 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5"
             >
               <span>✍️</span>
               <span>Create Account</span>
             </Link>
           </div>
+        </div>
+
+        {/* Sub-Header Navigation Strip with Back Button beneath */}
+        <div className="bg-canvas border-t border-primary-light/50 px-4 sm:px-8 py-2 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-soft hover:text-primary transition bg-white px-3 py-1.5 rounded-lg border border-primary-light/80 shadow-2xs active:scale-95"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <span>Back to Gateway</span>
+          </Link>
+          <span className="text-[11px] text-ink-soft font-medium hidden sm:inline">
+            Traveler e-Visa &amp; Biometric Records
+          </span>
         </div>
       </header>
 

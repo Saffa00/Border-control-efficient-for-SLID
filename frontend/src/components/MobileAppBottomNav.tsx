@@ -13,16 +13,12 @@ export function MobileAppBottomNav() {
     exact?: boolean;
   }
 
-  let tabs: TabItem[] = [];
-
-  // Check route categories precisely to avoid overlapping prefixes (e.g. /borders vs /border/check-in)
-  const isPublicInfoPage = [
-    "/",
-    "/about",
-    "/services",
-    "/borders",
-    "/contact",
+  // 1. Explicitly HIDE mobile bottom navigation on all role onboarding landing pages & auth pages
+  const isStandaloneLandingOrAuth = [
     "/applicant",
+    "/visa/portal",
+    "/border/portal",
+    "/admin/portal",
     "/login",
     "/register",
     "/forgot-password",
@@ -33,7 +29,21 @@ export function MobileAppBottomNav() {
     "/unauthorized",
   ].includes(path);
 
-  // 1. Explicit Public & 5-Borders Information Context
+  if (isStandaloneLandingOrAuth) {
+    return null; // No footer dock on onboarding / landing / login screens
+  }
+
+  let tabs: TabItem[] = [];
+
+  // 2. Main Public Gateway & 5 Information Pages Context
+  const isPublicInfoPage = [
+    "/",
+    "/about",
+    "/services",
+    "/borders",
+    "/contact",
+  ].includes(path);
+
   if (isPublicInfoPage) {
     tabs = [
       { name: "Home", path: "/", icon: "🏠", exact: true },
@@ -43,7 +53,7 @@ export function MobileAppBottomNav() {
       { name: "Contact", path: "/contact", icon: "✉️" },
     ];
   }
-  // 2. Admin Executive Portal Context
+  // 3. Admin Executive Portal Context (Signed In / Navigating Admin)
   else if (path.startsWith("/admin")) {
     tabs = [
       { name: "Overview", path: "/admin", icon: "📊", exact: true },
@@ -53,17 +63,16 @@ export function MobileAppBottomNav() {
       { name: "Audit Log", path: "/admin/audit-log", icon: "🔒" },
     ];
   }
-  // 3. Visa Officer Adjudication Console Context
+  // 4. Visa Officer Adjudication Console Context
   else if (path.startsWith("/visa-officer")) {
     tabs = [
       { name: "Queue", path: "/visa-officer", icon: "📋", exact: true },
       { name: "Consular", path: "/visa/portal", icon: "🏛️" },
       { name: "Borders", path: "/borders", icon: "🗺️" },
       { name: "Profile", path: "/profile", icon: "👤" },
-      { name: "Staff", path: "/staff/login", icon: "🚪" },
     ];
   }
-  // 4. Border Officer Clearance Desk Context (Only specific /border/* officer operational routes)
+  // 5. Border Officer Clearance Desk Context
   else if (
     path === "/border/check-in" ||
     path === "/border/verify-qr" ||
@@ -79,7 +88,7 @@ export function MobileAppBottomNav() {
       { name: "5 Borders", path: "/borders", icon: "🗺️" },
     ];
   }
-  // 5. Traveler / Applicant Dashboard & Services Context
+  // 6. Traveler / Applicant Dashboard & Services (Authenticated)
   else if (
     path.startsWith("/dashboard") ||
     path.startsWith("/passport") ||
@@ -97,15 +106,9 @@ export function MobileAppBottomNav() {
       { name: "Profile", path: "/profile", icon: "👤" },
     ];
   }
-  // 6. Default Fallback
+  // 7. Otherwise don't show dock
   else {
-    tabs = [
-      { name: "Home", path: "/", icon: "🏠", exact: true },
-      { name: "About", path: "/about", icon: "🏛️" },
-      { name: "Services", path: "/services", icon: "📋" },
-      { name: "Borders", path: "/borders", icon: "🗺️" },
-      { name: "Contact", path: "/contact", icon: "✉️" },
-    ];
+    return null;
   }
 
   return (
