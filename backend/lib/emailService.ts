@@ -14,9 +14,9 @@ const FROM_ADDRESS = process.env.EMAIL_FROM ?? "Sierra Leone Immigration Departm
 
 // Optional Custom SMTP credentials
 const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587", 10);
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || "465", 10);
 const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_PASS = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, "") : undefined;
 
 let smtpTransporter: nodemailer.Transporter | null = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
