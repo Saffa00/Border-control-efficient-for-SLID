@@ -33,6 +33,7 @@ interface KPI {
   borderColor: string;
   bgColor: string;
   subtext: string;
+  link: string;
 }
 
 export default function AdminDashboard() {
@@ -89,6 +90,7 @@ export default function AdminDashboard() {
           borderColor: "border-sky-200",
           bgColor: "bg-sky-50",
           subtext: "e-Visa Filings Registry",
+          link: "/visa-officer",
         },
         {
           label: "Border Crossings",
@@ -98,6 +100,7 @@ export default function AdminDashboard() {
           borderColor: "border-emerald-200",
           bgColor: "bg-emerald-50",
           subtext: "Logged at 5 Checkpoints",
+          link: "/border/check-in",
         },
         {
           label: "Active Overstays",
@@ -107,6 +110,7 @@ export default function AdminDashboard() {
           borderColor: "border-amber-200",
           bgColor: "bg-amber-50",
           subtext: "$50/Day Penalty Ledger",
+          link: "/border/overstays",
         },
         {
           label: "Watchlist Interceptions",
@@ -116,6 +120,7 @@ export default function AdminDashboard() {
           borderColor: "border-purple-200",
           bgColor: "bg-purple-50",
           subtext: "INTERPOL & Security Desk",
+          link: "/border/watchlist",
         },
       ]);
 
@@ -125,13 +130,48 @@ export default function AdminDashboard() {
     loadAnalytics();
   }, []);
 
+  const quickActions = [
+    {
+      title: "Staff & Officers",
+      desc: "Provision accounts, assign stations & access roles",
+      icon: "👥",
+      path: "/admin/users",
+      badge: "Manage Users",
+      color: "bg-purple-50 hover:bg-purple-100/80 border-purple-200 text-purple-900",
+    },
+    {
+      title: "Visa Adjudication",
+      desc: "Live consular processing queue and approvals",
+      icon: "🛂",
+      path: "/visa-officer",
+      badge: "Consular Desk",
+      color: "bg-sky-50 hover:bg-sky-100/80 border-sky-200 text-sky-900",
+    },
+    {
+      title: "Border Checkpoints",
+      desc: "Inspect ports of entry, airports & land borders",
+      icon: "🗺️",
+      path: "/admin/checkpoints",
+      badge: "Stations",
+      color: "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 text-emerald-900",
+    },
+    {
+      title: "A4 PDF Executive Reports",
+      desc: "Generate official national immigration intelligence",
+      icon: "📑",
+      path: "/admin/reports",
+      badge: "Intelligence",
+      color: "bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-900",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-ink font-['Tahoma',sans-serif]">
       <AdminNavbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* 1. Executive Directorate Sovereign Header */}
-        <div className="bg-gradient-to-r from-[#4C1D95] via-[#3B0764] to-[#1E8E5A] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#4C1D95] via-[#3B0764] to-[#1E8E5A] rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10">
@@ -141,25 +181,25 @@ export default function AdminDashboard() {
                 Republic of Sierra Leone • Directorate Headquarters
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white">
               Command Center &amp; National Analytics
             </h1>
-            <p className="text-xs sm:text-sm text-purple-100/90 mt-1 max-w-xl">
+            <p className="text-xs sm:text-sm text-purple-100/90 mt-1 max-w-2xl leading-relaxed">
               Real-time oversight of national border checkpoints, biometric passport records, visa adjudication throughput, and revenue ledgers.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3 relative z-10">
+          <div className="flex flex-wrap gap-2.5 relative z-10 w-full sm:w-auto">
             <Link
               to="/admin/users"
-              className="bg-[#1E8E5A] hover:bg-[#166E46] text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition shadow-lg flex items-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-[#1E8E5A] hover:bg-[#166E46] active:scale-95 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center gap-1.5"
             >
               <span>👥</span>
               <span>+ Provision Staff</span>
             </Link>
             <Link
               to="/admin/reports"
-              className="bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition backdrop-blur-md flex items-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition backdrop-blur-md flex items-center justify-center gap-1.5"
             >
               <span>📑</span>
               <span>A4 PDF Reports</span>
@@ -175,43 +215,74 @@ export default function AdminDashboard() {
         ) : (
           <>
             {/* 2. 4 Sovereign KPI Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
               {kpis.map((kpi) => (
-                <div
+                <Link
+                  to={kpi.link}
                   key={kpi.label}
-                  className={`bg-white border-2 ${kpi.borderColor} rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between`}
+                  className={`bg-white border-2 ${kpi.borderColor} rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`p-2 rounded-xl ${kpi.bgColor} text-xl`}>
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <span className={`p-2 rounded-xl ${kpi.bgColor} text-lg sm:text-xl group-hover:scale-110 transition-transform`}>
                       {kpi.icon}
                     </span>
                     <span className="text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
-                      Live Metric
+                      Live &rarr;
                     </span>
                   </div>
                   <div>
-                    <p className={`font-mono text-3xl font-bold ${kpi.color}`}>
+                    <p className={`font-mono text-2xl sm:text-3xl font-bold ${kpi.color}`}>
                       {kpi.value}
                     </p>
-                    <p className="text-xs font-bold text-ink mt-1">{kpi.label}</p>
+                    <p className="text-xs font-bold text-ink mt-0.5 sm:mt-1">{kpi.label}</p>
                     <p className="text-[10px] text-ink-soft mt-0.5">{kpi.subtext}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
-            {/* 3. Visa Applications by Status */}
-            <SecurityPaperPanel className="p-6 sm:p-8" showRosette>
-              <div className="flex items-center justify-between mb-6 pb-3 border-b border-primary-light/60">
+            {/* 3. Executive Quick Command Shortcuts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+              {quickActions.map((qa) => (
+                <Link
+                  key={qa.path}
+                  to={qa.path}
+                  className={`p-4 rounded-2xl border ${qa.color} transition shadow-2xs hover:shadow-sm flex items-start gap-3 group`}
+                >
+                  <span className="text-2xl p-2 bg-white rounded-xl shadow-2xs group-hover:scale-110 transition-transform flex-shrink-0">
+                    {qa.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <h3 className="text-xs font-bold text-ink truncate">{qa.title}</h3>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-ink-soft border border-zinc-200">
+                        {qa.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-ink-soft leading-snug line-clamp-2">{qa.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* 4. Visa Applications by Status */}
+            <SecurityPaperPanel className="p-5 sm:p-8" showRosette>
+              <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 border-b border-primary-light/60">
                 <div>
-                  <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-ink flex items-center gap-2">
                     <span>📊</span>
                     <span>Visa Applications by Adjudication Status</span>
                   </h2>
-                  <p className="text-xs text-ink-soft mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-ink-soft mt-0.5">
                     Real-time distribution across submitted, under review, approved, and rejected filings
                   </p>
                 </div>
+                <Link
+                  to="/visa-officer"
+                  className="text-xs font-semibold text-primary hover:underline hidden sm:inline"
+                >
+                  Open Visa Queue &rarr;
+                </Link>
               </div>
 
               {statusData.length > 0 ? (
@@ -242,15 +313,15 @@ export default function AdminDashboard() {
               )}
             </SecurityPaperPanel>
 
-            {/* 4. Crossings & Decision Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 5. Crossings & Decision Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
               {/* Crossings by checkpoint */}
-              <SecurityPaperPanel className="p-6 sm:p-8">
-                <h2 className="text-base font-bold text-ink mb-1 flex items-center gap-2">
+              <SecurityPaperPanel className="p-5 sm:p-8">
+                <h2 className="text-sm sm:text-base font-bold text-ink mb-1 flex items-center gap-2">
                   <span>🗺️</span>
                   <span>Crossings by Point of Entry</span>
                 </h2>
-                <p className="text-xs text-ink-soft mb-6">Traffic volume across all 5 national stations</p>
+                <p className="text-[11px] sm:text-xs text-ink-soft mb-4 sm:mb-6">Traffic volume across all 5 national stations</p>
 
                 {checkpointData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={260}>
@@ -278,12 +349,12 @@ export default function AdminDashboard() {
               </SecurityPaperPanel>
 
               {/* Decision breakdown */}
-              <SecurityPaperPanel className="p-6 sm:p-8">
-                <h2 className="text-base font-bold text-ink mb-1 flex items-center gap-2">
+              <SecurityPaperPanel className="p-5 sm:p-8">
+                <h2 className="text-sm sm:text-base font-bold text-ink mb-1 flex items-center gap-2">
                   <span>🛡️</span>
                   <span>Border Clearance Decisions</span>
                 </h2>
-                <p className="text-xs text-ink-soft mb-6">Cleared vs. secondary screening vs. refused</p>
+                <p className="text-[11px] sm:text-xs text-ink-soft mb-4 sm:mb-6">Cleared vs. secondary screening vs. refused</p>
 
                 {decisionData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={260}>
