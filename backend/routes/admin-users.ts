@@ -284,16 +284,29 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       return res.status(400).json({ error: "This request has already been approved." });
     }
 
-    // 2. Generate a secure temporary password
-    const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-    const tempPassword = `SLID-Staff!${randomSuffix}`;
+    // 2. Generate clean official username & high-entropy temporary password
+    const nameParts = staffReq.full_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const randomSuffix = crypto.randomBytes(2).toString("hex");
+    const currentYear = new Date().getFullYear();
+    const generatedUsername = `${nameParts.slice(0, 10)}${randomSuffix}${currentYear}`;
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let tempPassword = "";
+    const randomBytes = crypto.randomBytes(8);
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars[randomBytes[i] % chars.length];
+    }
 
     // 3. Create the Supabase auth user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: staffReq.email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { full_name: staffReq.full_name },
+      user_metadata: {
+        full_name: staffReq.full_name,
+        username: generatedUsername,
+        temporary_password: true,
+      },
     });
 
     if (authError) throw authError;
@@ -318,7 +331,7 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       user_id: newUserId,
       staff_id_code: staffIdCode,
       rank_title: staffReq.rank_title || "Officer",
-      department: staffReq.department || "Immigration Department",
+      department: staffReq.department || (staffReq.requested_role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance"),
       duty_station: dutyStationName,
       checkpoint_id: staffReq.checkpoint_id || null,
       issue_date: new Date().toISOString().slice(0, 10),
@@ -340,20 +353,20 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       .eq("request_id", requestId);
 
     // 7. Send real official credentials welcome email via Resend
-    const loginUrl = `${req.headers.origin || "http://localhost:5173"}/staff/login`;
-    const emailHtml = staffAccountApprovedEmail(
+    const loginUrl = "https://border-control-efficient-for-slid.vercel.app/staff/login";
+    const emailHtml = staffWelcomeCredentialsEmail(
       staffReq.full_name,
       staffReq.email,
+      generatedUsername,
       tempPassword,
       staffReq.requested_role,
-      dutyStationName,
       loginUrl
     );
 
     const emailRes = await sendEmail({
       userId: newUserId,
       to: staffReq.email,
-      subject: "Official Staff Account Approved — Sierra Leone Immigration Department",
+      subject: "🔒 Official Staff Account Approved & Login Credentials — Sierra Leone Immigration Department",
       html: emailHtml,
     });
 
@@ -365,6 +378,7 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
       target_id: newUserId,
       details: JSON.stringify({
         email: staffReq.email,
+        username: generatedUsername,
         role: staffReq.requested_role,
         dutyStation: dutyStationName,
         emailSent: emailRes.success,
@@ -373,7 +387,9 @@ router.post("/api/admin/staff-requests/:requestId/approve", requireAdmin, async 
 
     return res.json({
       success: true,
+      message: "Staff member approved, account provisioned, and credentials sent via email.",
       userId: newUserId,
+      username: generatedUsername,
       tempPassword,
       emailSent: emailRes.success,
     });
