@@ -4,28 +4,32 @@ import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import "./index.css";
 
-// 🚀 Instant PWA Update Engine
+// 🚀 Automated PWA Instant Live Sync Engine
 // Automatically checks for code updates, activates new service worker, and applies changes immediately
 const updateSW = registerSW({
   immediate: true,
   onNeedRefresh() {
-    // When a new build is detected on Vercel/production, immediately update & reload
+    // When a new build is detected on Vercel, immediately update & reload without prompt
     updateSW(true);
   },
   onOfflineReady() {
-    console.log("⚡ SLID PWA is ready for offline operation.");
+    console.log("⚡ SLID Portal is ready for offline operation.");
   },
   onRegisteredSW(_swUrl, registration) {
     if (registration) {
-      // 1. Check for new updates every 30 seconds
+      // 1. Check for new updates every 15 seconds
       setInterval(() => {
-        registration.update().catch((err) => console.debug("PWA update check failed:", err));
-      }, 30 * 1000);
+        registration.update().catch(() => {});
+      }, 15 * 1000);
 
-      // 2. Check for new updates immediately whenever user returns to the app / refocuses window
+      // 2. Check for new updates on window refocus, tab switch, and online event
+      const checkUpdate = () => registration.update().catch(() => {});
+      window.addEventListener("focus", checkUpdate);
+      window.addEventListener("online", checkUpdate);
+      window.addEventListener("pageshow", checkUpdate);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
-          registration.update().catch((err) => console.debug("PWA visibility update check failed:", err));
+          checkUpdate();
         }
       });
     }
