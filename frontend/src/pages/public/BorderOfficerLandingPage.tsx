@@ -16,14 +16,14 @@ export default function BorderOfficerLandingPage() {
       <header className="border-b border-emerald-200 bg-white/95 backdrop-blur-md sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3.5 group">
-            <Link to="/">
+            <Link to="/" className="flex-shrink-0">
               <img
                 src="/slid-logo.png"
                 alt="Sierra Leone Immigration Department Emblem"
-                className="w-13 h-13 sm:w-14 sm:h-14 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
               />
             </Link>
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <div className="flex items-center gap-1.5">
                 <SierraLeoneFlag width={18} height={12} />
                 <span className="text-[10px] font-bold text-[#1E8E5A] uppercase tracking-widest leading-none">
