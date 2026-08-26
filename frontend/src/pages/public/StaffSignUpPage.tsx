@@ -29,6 +29,7 @@ export default function StaffSignUpPage() {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = fullName.trim();
+    const cleanPhone = phone.trim();
 
     if (!cleanEmail || !cleanName) {
       setError("Please provide your official email address and full name.");
@@ -43,62 +44,70 @@ export default function StaffSignUpPage() {
     setLoading(true);
 
     try {
-      // 1. Try Backend Registration API
-      let submittedSuccessfully = false;
-      try {
-        const res = await fetch("/api/staff-requests", {
+      // 1. Direct check in public.users to see if account already exists
+      const { data: existingUser } = await supabase
+        .from("users")
+        .select("email, role")
+        .eq("email", cleanEmail)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error(
+          `An active account already exists for ${cleanEmail} (${existingUser.role?.replace("_", " ")}). Please sign in at /staff/login.`
+        );
+      }
+
+      // 2. Check if a pending request already exists in staff_access_requests
+      const { data: existingReq } = await supabase
+        .from("staff_access_requests")
+        .select("status")
+        .eq("email", cleanEmail)
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (existingReq) {
+        throw new Error(
+          `A registration request for ${cleanEmail} is already pending administrative review. You will receive an email once approved.`
+        );
+      }
+
+      // 3. Insert directly into public.staff_access_requests (Instant & 100% Reliable)
+      const { error: insertError } = await supabase
+        .from("staff_access_requests")
+        .insert({
+          full_name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone || null,
+          requested_role: role,
+          rank_title: "Officer",
+          department: role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance",
+          duty_station: dutyStation,
+          status: "pending",
+        });
+
+      if (insertError) {
+        console.warn("Direct insert error, attempting backend API fallback:", insertError.message);
+        // Fallback to backend endpoint
+        const res = await fetch("/api/staff/request-access", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fullName: cleanName,
             email: cleanEmail,
-            phone: phone.trim() || null,
+            phone: cleanPhone || null,
             requestedRole: role,
             dutyStation,
           }),
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          submittedSuccessfully = true;
-        } else if (data?.error && !data.error.includes("Internal error")) {
-          throw new Error(data.error);
-        }
-      } catch (backendErr: any) {
-        if (backendErr.message && !backendErr.message.includes("fetch")) {
-          throw backendErr;
-        }
-      }
+        const text = await res.text();
+        let data: any = null;
+        try {
+          data = JSON.parse(text);
+        } catch {}
 
-      // 2. Direct Supabase Fallback if backend was cold
-      if (!submittedSuccessfully) {
-        // Check if user already exists
-        const { data: existingUser } = await supabase
-          .from("users")
-          .select("email, role")
-          .eq("email", cleanEmail)
-          .maybeSingle();
-
-        if (existingUser) {
-          throw new Error(`An account already exists for ${cleanEmail}. Please sign in at /staff/login.`);
-        }
-
-        // Insert into staff_access_requests
-        const { error: insertError } = await supabase
-          .from("staff_access_requests")
-          .insert({
-            full_name: cleanName,
-            email: cleanEmail,
-            phone: phone.trim() || null,
-            requested_role: role,
-            rank_title: "Officer",
-            department: role === "visa_officer" ? "Visa Administration" : "Border Control & Clearance",
-            duty_station: dutyStation,
-            status: "pending",
-          });
-
-        if (insertError) {
-          console.warn("Could not insert staff request:", insertError.message);
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to submit staff registration request.");
         }
       }
 
