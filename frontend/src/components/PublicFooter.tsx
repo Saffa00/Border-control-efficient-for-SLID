@@ -3,7 +3,7 @@ import { SierraLeoneFlag } from "./SierraLeoneFlag";
 
 export function PublicFooter() {
   return (
-    <footer className="relative z-10 border-t border-white/10 bg-[#05080F]/98 backdrop-blur-xl text-xs text-zinc-400 font-['Tahoma',sans-serif]">
+    <footer className="hidden sm:block relative z-10 border-t border-white/10 bg-[#05080F]/98 backdrop-blur-xl text-xs text-zinc-400 font-['Tahoma',sans-serif]">
       {/* 1. National Tri-Color Accent Ribbon */}
       <div className="h-1.5 w-full grid grid-cols-3 shadow-md">
         <div className="bg-[#1E8E5A]"></div>

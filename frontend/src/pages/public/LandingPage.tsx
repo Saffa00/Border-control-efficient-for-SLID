@@ -208,8 +208,8 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Official Footer */}
-      <footer className="border-t border-primary-light/80 px-8 py-6 bg-white">
+      {/* Official Footer - Hidden on mobile, shown on web */}
+      <footer className="hidden sm:block border-t border-primary-light/80 px-8 py-6 bg-white">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs text-ink-soft">
           <div className="flex items-center gap-2">
             <span className="font-bold text-ink">Republic of Sierra Leone</span>

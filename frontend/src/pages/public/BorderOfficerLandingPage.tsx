@@ -340,8 +340,8 @@ export default function BorderOfficerLandingPage() {
         </section>
       </main>
 
-      {/* 4. Official Footer */}
-      <footer className="border-t border-primary-light/80 bg-white px-8 py-6 text-center">
+      {/* 4. Official Footer - Hidden on mobile, shown on web */}
+      <footer className="hidden sm:block border-t border-primary-light/80 bg-white px-8 py-6 text-center">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-soft">
           <div className="flex items-center gap-2">
             <SierraLeoneFlag width={20} height={14} />
