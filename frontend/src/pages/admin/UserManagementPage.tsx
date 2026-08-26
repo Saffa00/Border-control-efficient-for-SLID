@@ -715,7 +715,7 @@ export default function UserManagementPage() {
     <div className="min-h-screen bg-canvas text-ink font-body">
       <AdminNavbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-36">
         {/* Toast Notification */}
         {notification && (
           <div
@@ -862,7 +862,7 @@ export default function UserManagementPage() {
               </div>
             </div>
 
-            {/* Users Table */}
+            {/* Users List: Mobile Cards + Desktop Table */}
             {loading ? (
               <div className="p-12 text-center text-ink-soft text-xs">Loading accounts...</div>
             ) : users.length === 0 ? (
@@ -870,126 +870,229 @@ export default function UserManagementPage() {
                 No user accounts found matching current filters.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-primary-light bg-canvas/60 text-ink-soft uppercase text-[10px] tracking-wider font-semibold">
-                      <th className="py-3 px-4">Officer / User</th>
-                      <th className="py-3 px-4">Role &amp; Status</th>
-                      <th className="py-3 px-4">Badge / Duty Station</th>
-                      <th className="py-3 px-4">Contact Phone</th>
-                      <th className="py-3 px-4">Registered</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary-light/60">
-                    {users.map((u) => {
-                      const staff = u.staff_profiles?.[0];
-                      return (
-                        <tr key={u.user_id} className="hover:bg-primary-light/20 transition">
-                          {/* Name and Email */}
-                          <td className="py-3.5 px-4">
-                            <p className="font-semibold text-ink">{u.full_name}</p>
-                            <p className="text-[11px] text-ink-soft font-mono">{u.email}</p>
-                          </td>
-
-                          {/* Role and Active Status */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded font-bold ${
-                                  u.role === "admin"
-                                    ? "bg-purple-100 text-purple-900 border border-purple-300"
-                                    : u.role === "visa_officer"
-                                    ? "bg-amber-100 text-amber-900 border border-amber-300"
-                                    : u.role === "immigration_officer"
-                                    ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
-                                    : "bg-canvas text-ink-soft border border-primary-light"
-                                }`}
-                              >
-                                {ROLE_LABELS[u.role] || u.role}
-                              </span>
-                              <span
-                                className={`w-2 h-2 rounded-full ${
-                                  u.is_active ? "bg-status-approved" : "bg-status-rejected"
-                                }`}
-                                title={u.is_active ? "Active" : "Disabled / Inactive"}
-                              />
-                            </div>
-                          </td>
-
-                          {/* Badge / Station */}
-                          <td className="py-3.5 px-4 text-[11px]">
-                            {staff ? (
-                              <div>
-                                <p className="font-mono text-primary font-bold">{staff.staff_id_code}</p>
-                                <p className="text-ink-soft text-[10px]">{staff.duty_station}</p>
-                              </div>
-                            ) : (
-                              <span className="text-ink-soft italic text-[10px]">N/A (Applicant)</span>
+              <div>
+                {/* 1. Mobile Cards View (sm:hidden) */}
+                <div className="grid grid-cols-1 gap-3 sm:hidden mb-4">
+                  {users.map((u) => {
+                    const staff = u.staff_profiles?.[0];
+                    return (
+                      <div
+                        key={u.user_id}
+                        className="bg-white border border-primary-light rounded-2xl p-4 shadow-xs space-y-3"
+                      >
+                        {/* Header: Name, Email, Status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-sm text-ink">{u.full_name}</p>
+                            <p className="text-xs text-primary font-mono">{u.email}</p>
+                            {u.phone && (
+                              <p className="text-[11px] text-ink-soft font-mono mt-0.5">📞 {u.phone}</p>
                             )}
-                          </td>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span
+                              className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded font-bold ${
+                                u.role === "admin"
+                                  ? "bg-purple-100 text-purple-900 border border-purple-300"
+                                  : u.role === "visa_officer"
+                                  ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                  : u.role === "immigration_officer"
+                                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                  : "bg-canvas text-ink-soft border border-primary-light"
+                              }`}
+                            >
+                              {ROLE_LABELS[u.role] || u.role}
+                            </span>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                                u.is_active
+                                  ? "bg-status-approved-bg text-status-approved"
+                                  : "bg-status-rejected-bg text-status-rejected"
+                              }`}
+                            >
+                              {u.is_active ? "● ACTIVE" : "● PENDING / SUSPENDED"}
+                            </span>
+                          </div>
+                        </div>
 
-                          {/* Phone */}
-                          <td className="py-3.5 px-4 text-ink-soft text-[11px] font-mono">
-                            {u.phone || "—"}
-                          </td>
+                        {/* Station Info if Staff */}
+                        {staff && (
+                          <div className="bg-canvas/80 p-2.5 rounded-xl text-xs flex items-center justify-between">
+                            <span className="text-ink-soft text-[10px] uppercase font-bold">Station:</span>
+                            <span className="font-bold text-ink">{staff.duty_station} ({staff.staff_id_code})</span>
+                          </div>
+                        )}
 
-                          {/* Date Registered */}
-                          <td className="py-3.5 px-4 text-ink-soft font-mono text-[11px]">
-                            {new Date(u.created_at).toLocaleDateString()}
-                          </td>
+                        {/* Mobile Action Buttons */}
+                        <div className="pt-2 border-t border-primary-light/60 flex flex-wrap items-center gap-2">
+                          {/* Send Credentials Email Button */}
+                          {u.role !== "applicant" && (
+                            <button
+                              onClick={() => handleDispatchCredentials(u)}
+                              disabled={sendingCredentialsId === u.user_id}
+                              className="flex-1 bg-[#0284C7] hover:bg-[#0369A1] active:scale-[0.98] text-white text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-50 flex items-center justify-center gap-1.5 touch-manipulation min-h-[42px]"
+                              title="Send Official Credentials Email (Username & Temporary Password)"
+                            >
+                              <span>{sendingCredentialsId === u.user_id ? "⏳ Sending..." : "✉️ Send Credentials"}</span>
+                            </button>
+                          )}
 
-                          {/* Actions: Edit, Password Reset, Dispatch Credentials, Delete */}
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="inline-flex items-center gap-1.5">
-                              {/* Dispatch Official Credentials Email (Username & Temp Password) */}
-                              {u.role !== "applicant" && (
-                                <button
-                                  onClick={() => handleDispatchCredentials(u)}
-                                  disabled={sendingCredentialsId === u.user_id}
-                                  title="Dispatch Official Credentials Email (Username & Temporary Password)"
-                                  className="p-1.5 text-sky-600 hover:bg-sky-100/60 rounded transition cursor-pointer disabled:opacity-40"
+                          {/* Password Reset Link */}
+                          <button
+                            onClick={() => handleSendResetLink(u)}
+                            className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 active:scale-[0.98] text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1 touch-manipulation min-h-[42px]"
+                            title="Send Password Reset Email"
+                          >
+                            <span>🔑 Reset</span>
+                          </button>
+
+                          {/* Edit Details */}
+                          <button
+                            onClick={() => openEditModal(u)}
+                            className="bg-canvas hover:bg-zinc-100 border border-primary-light text-ink active:scale-[0.98] text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1 touch-manipulation min-h-[42px]"
+                            title="Edit User Details"
+                          >
+                            <span>✏️ Edit</span>
+                          </button>
+
+                          {/* Delete Account */}
+                          {u.user_id !== profile?.user_id && (
+                            <button
+                              onClick={() => openDeleteModal(u)}
+                              className="bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-800 active:scale-[0.98] text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1 touch-manipulation min-h-[42px]"
+                              title="Delete Account"
+                            >
+                              <span>🗑️</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 2. Desktop Table View (hidden sm:block) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-primary-light bg-canvas/60 text-ink-soft uppercase text-[10px] tracking-wider font-semibold">
+                        <th className="py-3 px-4">Officer / User</th>
+                        <th className="py-3 px-4">Role &amp; Status</th>
+                        <th className="py-3 px-4">Badge / Duty Station</th>
+                        <th className="py-3 px-4">Contact Phone</th>
+                        <th className="py-3 px-4">Registered</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary-light/60">
+                      {users.map((u) => {
+                        const staff = u.staff_profiles?.[0];
+                        return (
+                          <tr key={u.user_id} className="hover:bg-primary-light/20 transition">
+                            {/* Name and Email */}
+                            <td className="py-3.5 px-4">
+                              <p className="font-semibold text-ink">{u.full_name}</p>
+                              <p className="text-[11px] text-ink-soft font-mono">{u.email}</p>
+                            </td>
+
+                            {/* Role and Active Status */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded font-bold ${
+                                    u.role === "admin"
+                                      ? "bg-purple-100 text-purple-900 border border-purple-300"
+                                      : u.role === "visa_officer"
+                                      ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                      : u.role === "immigration_officer"
+                                      ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                      : "bg-canvas text-ink-soft border border-primary-light"
+                                  }`}
                                 >
-                                  {sendingCredentialsId === u.user_id ? "⏳" : "✉️"}
-                                </button>
+                                  {ROLE_LABELS[u.role] || u.role}
+                                </span>
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    u.is_active ? "bg-status-approved" : "bg-status-rejected"
+                                  }`}
+                                  title={u.is_active ? "Active" : "Disabled / Inactive"}
+                                />
+                              </div>
+                            </td>
+
+                            {/* Badge / Station */}
+                            <td className="py-3.5 px-4 text-[11px]">
+                              {staff ? (
+                                <div>
+                                  <p className="font-mono text-primary font-bold">{staff.staff_id_code}</p>
+                                  <p className="text-ink-soft text-[10px]">{staff.duty_station}</p>
+                                </div>
+                              ) : (
+                                <span className="text-ink-soft italic text-[10px]">N/A (Applicant)</span>
                               )}
+                            </td>
 
-                              {/* Edit Button */}
-                              <button
-                                onClick={() => openEditModal(u)}
-                                title="Edit User Details"
-                                className="p-1.5 text-primary hover:bg-primary-light/40 rounded transition cursor-pointer"
-                              >
-                                ✏️
-                              </button>
+                            {/* Phone */}
+                            <td className="py-3.5 px-4 text-ink-soft text-[11px] font-mono">
+                              {u.phone || "—"}
+                            </td>
 
-                              {/* Send Reset Link */}
-                              <button
-                                onClick={() => handleSendResetLink(u)}
-                                title="Send Password Reset Email"
-                                className="p-1.5 text-accent hover:bg-accent-light/40 rounded transition cursor-pointer"
-                              >
-                                🔑
-                              </button>
+                            {/* Date Registered */}
+                            <td className="py-3.5 px-4 text-ink-soft font-mono text-[11px]">
+                              {new Date(u.created_at).toLocaleDateString()}
+                            </td>
 
-                              {/* Delete Button */}
-                              {u.user_id !== profile?.user_id && (
+                            {/* Actions: Edit, Password Reset, Dispatch Credentials, Delete */}
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                {/* Dispatch Official Credentials Email (Username & Temp Password) */}
+                                {u.role !== "applicant" && (
+                                  <button
+                                    onClick={() => handleDispatchCredentials(u)}
+                                    disabled={sendingCredentialsId === u.user_id}
+                                    title="Dispatch Official Credentials Email (Username & Temporary Password)"
+                                    className="p-1.5 text-sky-600 hover:bg-sky-100/60 rounded transition cursor-pointer disabled:opacity-40"
+                                  >
+                                    {sendingCredentialsId === u.user_id ? "⏳" : "✉️"}
+                                  </button>
+                                )}
+
+                                {/* Edit Button */}
                                 <button
-                                  onClick={() => openDeleteModal(u)}
-                                  title="Delete User Account"
-                                  className="p-1.5 text-status-rejected hover:bg-status-rejected-bg rounded transition cursor-pointer"
+                                  onClick={() => openEditModal(u)}
+                                  title="Edit User Details"
+                                  className="p-1.5 text-primary hover:bg-primary-light/40 rounded transition cursor-pointer"
                                 >
-                                  🗑️
+                                  ✏️
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+
+                                {/* Send Reset Link */}
+                                <button
+                                  onClick={() => handleSendResetLink(u)}
+                                  title="Send Password Reset Email"
+                                  className="p-1.5 text-accent hover:bg-accent-light/40 rounded transition cursor-pointer"
+                                >
+                                  🔑
+                                </button>
+
+                                {/* Delete Button */}
+                                {u.user_id !== profile?.user_id && (
+                                  <button
+                                    onClick={() => openDeleteModal(u)}
+                                    title="Delete User Account"
+                                    className="p-1.5 text-status-rejected hover:bg-status-rejected-bg rounded transition cursor-pointer"
+                                  >
+                                    🗑️
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </SecurityPaperPanel>
@@ -1062,15 +1165,38 @@ export default function UserManagementPage() {
                           <button
                             onClick={() => handleApproveRequest(req)}
                             disabled={approvingId === req.request_id}
-                            className="flex-1 bg-[#1E8E5A] hover:bg-[#166E46] active:scale-[0.99] text-white text-xs font-bold py-2.5 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-50 text-center"
+                            className="flex-1 bg-[#1E8E5A] hover:bg-[#166E46] active:scale-[0.99] text-white text-xs font-bold py-2.5 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-50 text-center touch-manipulation min-h-[44px] flex items-center justify-center gap-1.5"
                           >
-                            {approvingId === req.request_id ? "Approving..." : "✓ Approve & Issue Credentials"}
+                            <span>{approvingId === req.request_id ? "Approving..." : "✓ Approve & Issue Credentials"}</span>
                           </button>
                           <button
                             onClick={() => handleRejectRequest(req.request_id, req.full_name)}
-                            className="px-3 py-2.5 border border-status-rejected text-status-rejected hover:bg-status-rejected-bg text-xs font-semibold rounded-xl transition cursor-pointer"
+                            className="px-3 py-2.5 border border-status-rejected text-status-rejected hover:bg-status-rejected-bg text-xs font-semibold rounded-xl transition cursor-pointer touch-manipulation min-h-[44px] flex items-center justify-center"
                           >
                             ✕ Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {req.status === "approved" && (
+                        <div className="pt-1">
+                          <button
+                            onClick={() =>
+                              handleDispatchCredentials({
+                                user_id: (req as any).user_id || req.request_id,
+                                full_name: req.full_name,
+                                email: req.email,
+                                role: req.requested_role,
+                              } as any)
+                            }
+                            disabled={sendingCredentialsId === ((req as any).user_id || req.request_id)}
+                            className="w-full bg-[#0284C7] hover:bg-[#0369A1] active:scale-[0.98] text-white text-xs font-bold py-2.5 rounded-xl transition cursor-pointer shadow-xs disabled:opacity-50 flex items-center justify-center gap-1.5 touch-manipulation min-h-[42px]"
+                          >
+                            <span>
+                              {sendingCredentialsId === ((req as any).user_id || req.request_id)
+                                ? "⏳ Sending..."
+                                : "✉️ Re-send Official Credentials Email"}
+                            </span>
                           </button>
                         </div>
                       )}
