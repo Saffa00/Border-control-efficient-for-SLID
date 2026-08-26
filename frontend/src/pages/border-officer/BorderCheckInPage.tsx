@@ -190,7 +190,7 @@ export default function BorderCheckInPage() {
     <div className="min-h-screen bg-canvas text-ink font-body">
       <OfficerNavbar title="Traveler Border Check-in Console" />
 
-      <main className="max-w-2xl mx-auto px-8 py-10 grid gap-6">
+      <main className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-10 pb-36 grid gap-6">
         {/* Lookup form */}
         <SecurityPaperPanel className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

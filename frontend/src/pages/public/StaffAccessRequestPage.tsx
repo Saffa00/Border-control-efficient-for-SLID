@@ -125,7 +125,7 @@ export default function StaffAccessRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-ink font-body py-12 px-6">
+    <div className="min-h-screen bg-canvas text-ink font-body py-12 px-6 pb-36">
       <div className="max-w-2xl mx-auto">
         {/* Breadcrumb & Title */}
         <div className="mb-6">
@@ -337,13 +337,13 @@ export default function StaffAccessRequestPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-primary text-white py-2.5 rounded-md text-sm font-semibold hover:bg-primary-dark disabled:opacity-50 transition cursor-pointer shadow-xs"
+                  className="flex-1 bg-primary text-white py-3 rounded-xl text-sm font-semibold hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 transition cursor-pointer shadow-xs touch-manipulation min-h-[48px]"
                 >
                   {submitting ? "Submitting Official Request..." : "Submit Access Application"}
                 </button>
                 <Link
                   to="/staff/login"
-                  className="border border-primary-light text-ink-soft hover:text-ink px-4 py-2.5 rounded-md text-sm font-medium transition text-center"
+                  className="border border-primary-light text-ink-soft hover:text-ink px-4 py-3 rounded-xl text-sm font-medium transition text-center touch-manipulation min-h-[48px] flex items-center justify-center"
                 >
                   Cancel
                 </Link>

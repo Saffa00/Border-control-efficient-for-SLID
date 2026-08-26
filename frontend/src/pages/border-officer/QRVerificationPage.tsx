@@ -335,7 +335,7 @@ export default function QRVerificationPage() {
       {/* Hidden container for file scan processing */}
       <div id="qr-file-processor" className="hidden" />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-36 space-y-6">
         {/* Page Title */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -349,7 +349,7 @@ export default function QRVerificationPage() {
           </div>
           <Link
             to="/border/check-in"
-            className="text-xs text-[#0284C7] font-bold hover:underline inline-flex items-center gap-1 bg-white px-3 py-1.5 rounded-xl border border-primary-light shadow-2xs"
+            className="text-xs text-[#0284C7] font-bold hover:underline inline-flex items-center gap-1 bg-white px-3.5 py-2 rounded-xl border border-primary-light shadow-2xs touch-manipulation"
           >
             <span>Border Check-in Desk</span>
             <ArrowRight size={13} />
@@ -376,7 +376,7 @@ export default function QRVerificationPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-2 bg-canvas hover:bg-zinc-100 border border-primary-light rounded-xl text-xs font-semibold text-ink flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                className="px-3.5 py-2.5 bg-canvas hover:bg-zinc-100 active:bg-zinc-200 border border-primary-light rounded-xl text-xs font-semibold text-ink flex items-center gap-1.5 transition cursor-pointer shadow-2xs touch-manipulation min-h-[42px]"
                 title="Select QR code image from phone gallery"
               >
                 <ImageIcon size={15} />
@@ -387,7 +387,7 @@ export default function QRVerificationPage() {
               <button
                 type="button"
                 onClick={() => setCameraActive(!cameraActive)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs touch-manipulation min-h-[42px] active:scale-95 ${
                   cameraActive
                     ? "bg-rose-600 hover:bg-rose-700 text-white"
                     : "bg-[#1E8E5A] hover:bg-[#166E46] text-white"
@@ -431,7 +431,7 @@ export default function QRVerificationPage() {
                   <button
                     type="button"
                     onClick={toggleCameraSwitch}
-                    className="text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition text-zinc-200"
+                    className="text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition text-zinc-200 touch-manipulation"
                   >
                     <SwitchCamera size={14} />
                     <span>Flip Camera</span>
@@ -467,8 +467,14 @@ export default function QRVerificationPage() {
             </div>
           )}
 
-          {/* Manual Input Search Bar */}
-          <div className="pt-2">
+          {/* Manual Input Search Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              verify(tokenInput);
+            }}
+            className="pt-2"
+          >
             <label className="block text-[11px] font-bold text-ink-soft uppercase mb-1.5">
               Or Enter Verification Token / Passport Number Manually:
             </label>
@@ -480,23 +486,19 @@ export default function QRVerificationPage() {
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                   placeholder="e.g. SL-VISA-2026-XXXX or QR Token Hash..."
-                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-primary-light rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") verify(tokenInput);
-                  }}
+                  className="w-full pl-9 pr-3 py-2.5 text-xs bg-white border border-primary-light rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary min-h-[44px]"
                 />
               </div>
               <button
-                type="button"
-                onClick={() => verify(tokenInput)}
+                type="submit"
                 disabled={loading || !tokenInput.trim()}
-                className="bg-[#0B4F6C] hover:bg-[#07364B] disabled:opacity-50 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                className="bg-[#0B4F6C] hover:bg-[#07364B] active:scale-95 disabled:opacity-50 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer shadow-xs flex items-center gap-1.5 touch-manipulation min-h-[44px]"
               >
                 {loading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
                 <span>Verify</span>
               </button>
             </div>
-          </div>
+          </form>
         </SecurityPaperPanel>
 
         {/* 2. Verification Result Card */}

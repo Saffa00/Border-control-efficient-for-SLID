@@ -197,7 +197,7 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-ink font-['Tahoma',sans-serif] flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#F8FAFC] text-ink font-['Tahoma',sans-serif] flex items-center justify-center px-4 py-10 pb-36">
       <div className="w-full max-w-md">
         {/* Official Header */}
         <div className="text-center mb-6">

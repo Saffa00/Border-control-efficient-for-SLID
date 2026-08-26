@@ -11,7 +11,7 @@ export default function StaffSignUpPage() {
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("immigration_officer");
   const [dutyStation, setDutyStation] = useState("Freetown National Headquarters");
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -353,12 +353,8 @@ export default function StaffSignUpPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !agreed}
-              className={`w-full font-semibold py-3 rounded-xl text-sm transition shadow-md mt-2 flex items-center justify-center gap-2 ${
-                agreed && !loading
-                  ? "bg-[#0284C7] hover:bg-[#0369A1] text-white cursor-pointer shadow-sky-500/20 active:scale-[0.99]"
-                  : "bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none"
-              }`}
+              disabled={loading}
+              className="w-full font-semibold py-3.5 rounded-xl text-sm transition shadow-md mt-2 flex items-center justify-center gap-2 bg-[#0284C7] hover:bg-[#0369A1] active:scale-[0.98] text-white cursor-pointer shadow-sky-500/20 touch-manipulation min-h-[48px] disabled:opacity-50"
             >
               {loading ? "Submitting Application..." : "Submit Access Request"}
             </button>
