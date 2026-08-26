@@ -138,7 +138,7 @@ export default function PassportPage() {
     <div className="min-h-screen bg-canvas text-ink font-body">
       <ApplicantNavbar />
 
-      <main className="max-w-xl mx-auto px-6 py-8">
+      <main className="max-w-xl mx-auto px-6 py-8 pb-24 sm:pb-8">
         <div className="mb-6">
           <Link to="/dashboard" className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
             &larr; Back to dashboard

@@ -82,7 +82,7 @@ export default function ApplicantDashboard() {
     <div className="min-h-screen bg-[#F8FAFC] text-ink font-['Tahoma',sans-serif]">
       <ApplicantNavbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-8 space-y-8">
         {/* 1. Sovereign Welcome Hero Header */}
         <div className="bg-gradient-to-r from-[#0B4F6C] via-[#083a50] to-[#1E8E5A] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>

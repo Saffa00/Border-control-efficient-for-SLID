@@ -245,7 +245,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-canvas font-body text-ink pb-12 font-['Tahoma']">
       <ApplicantNavbar />
 
-      <main className="max-w-4xl mx-auto px-6 py-8 grid gap-8">
+      <main className="max-w-4xl mx-auto px-6 py-8 pb-24 sm:pb-8 grid gap-8">
         {/* Page Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-light pb-4">
           <div>

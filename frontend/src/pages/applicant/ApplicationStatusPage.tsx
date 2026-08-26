@@ -83,7 +83,7 @@ export default function ApplicationStatusPage() {
     <div className="min-h-screen bg-canvas text-ink font-body">
       <ApplicantNavbar />
 
-      <main className="max-w-3xl mx-auto px-6 py-8 grid gap-6">
+      <main className="max-w-3xl mx-auto px-6 py-8 pb-24 sm:pb-8 grid gap-6">
         <div className="flex items-center justify-between">
           <div>
             <Link to="/dashboard" className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
