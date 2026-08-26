@@ -11,10 +11,13 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
 import { UserProfileMenu } from "./UserProfileMenu";
+import { NotificationBellMenu } from "./NotificationBellMenu";
 
 export function AdminNavbar() {
   const { profile } = useAuth();
   const location = useLocation();
+
+  const firstName = profile?.full_name?.split(" ")[0] || "Admin";
 
   const navLinks = [
     { name: "Executive Overview", path: "/admin", icon: LayoutDashboard },
@@ -40,35 +43,35 @@ export function AdminNavbar() {
 
       {/* 2. Main Executive Header */}
       <div className="border-b border-purple-200 bg-white/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2">
-          {/* Brand & Logo */}
-          <Link to="/admin" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
-            <img
-              src="/slid-logo.png"
-              alt="SLID Crest"
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
-            />
-            <div className="hidden md:flex flex-col">
+        <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3">
+          {/* Left: Brand Logo & Welcome Greeting */}
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
+            <Link to="/admin" className="flex items-center gap-2 group flex-shrink-0">
+              <img
+                src="/slid-logo.png"
+                alt="SLID Crest"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
+              />
+            </Link>
+
+            <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <SierraLeoneFlag width={16} height={10} />
-                <span className="text-[9px] font-bold text-[#1E8E5A] uppercase tracking-widest leading-none">
-                  Republic of Sierra Leone
+                <SierraLeoneFlag width={14} height={9} />
+                <span className="text-[10px] sm:text-xs font-bold text-ink">
+                  Welcome, {firstName}
                 </span>
-                <span className="text-[9px] uppercase font-bold bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.2 rounded-full">
-                  Directorate Headquarters
+                <span className="text-[8px] sm:text-[9px] uppercase font-bold bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.2 rounded-full">
+                  Admin
                 </span>
               </div>
-              <span className="text-base sm:text-lg font-bold text-ink leading-tight group-hover:text-purple-900 transition">
-                National Central Administration
-              </span>
-              <span className="text-[10px] text-ink-soft -mt-0.5">
-                Department of Immigration • Executive Console
+              <span className="text-[10px] text-ink-soft hidden sm:block">
+                National Central Administration • Executive Console
               </span>
             </div>
-          </Link>
+          </div>
 
-          {/* Navigation Tabs - Hidden on mobile, shown on desktop */}
-          <nav className="hidden md:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
+          {/* Center: Navigation Tabs (Desktop only) */}
+          <nav className="hidden lg:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               const IconComp = link.icon;
@@ -89,8 +92,8 @@ export function AdminNavbar() {
             })}
           </nav>
 
-          {/* Quick Operational Portal Switchers & User Profile Menu */}
-          <div className="flex items-center gap-2 sm:gap-3.5">
+          {/* Right: Quick Portals, Notification Bell, Profile Avatar */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="hidden xl:flex items-center gap-1 border-r border-primary-light/70 pr-3">
               {portalLinks.map((portal) => {
                 const IconComp = portal.icon;
@@ -98,16 +101,19 @@ export function AdminNavbar() {
                   <Link
                     key={portal.path}
                     to={portal.path}
-                    className="text-[11px] font-semibold text-primary hover:text-primary-dark px-2.5 py-1.5 rounded-lg hover:bg-primary-light/30 transition flex items-center gap-1.5"
+                    className="text-[11px] font-semibold text-primary hover:text-primary-dark px-2 py-1 rounded-lg hover:bg-primary-light/30 transition flex items-center gap-1"
                   >
-                    <IconComp size={14} />
-                    <span>{portal.name} &rarr;</span>
+                    <IconComp size={13} />
+                    <span>{portal.name}</span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Profile Avatar with Photo Upload & Sign Out Icon */}
+            {/* Real Notification Bell Icon */}
+            <NotificationBellMenu />
+
+            {/* Profile Dropdown with Upload Photo, Change Password, Settings, Sign Out */}
             <UserProfileMenu roleTheme="admin" />
           </div>
         </div>
