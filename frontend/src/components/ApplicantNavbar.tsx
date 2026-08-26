@@ -1,4 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Plane,
+  Bell,
+  UserCheck,
+} from "lucide-react";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
 import { UserProfileMenu } from "./UserProfileMenu";
 
@@ -6,11 +13,11 @@ export function ApplicantNavbar() {
   const location = useLocation();
 
   const navLinks = [
-    { name: "My Dashboard", path: "/dashboard", icon: "📊" },
-    { name: "My Passport", path: "/passport", icon: "🛂" },
-    { name: "Apply for Visa", path: "/visa/new", icon: "✈️" },
-    { name: "Notifications", path: "/notifications", icon: "🔔" },
-    { name: "Profile & Security", path: "/profile", icon: "👤" },
+    { name: "My Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "My Passport", path: "/passport", icon: BookOpen },
+    { name: "Apply for Visa", path: "/visa/new", icon: Plane },
+    { name: "Notifications", path: "/notifications", icon: Bell },
+    { name: "Profile & Security", path: "/profile", icon: UserCheck },
   ];
 
   return (
@@ -51,10 +58,11 @@ export function ApplicantNavbar() {
             </div>
           </Link>
 
-          {/* Navigation Tabs - Hidden on mobile, shown on desktop (mobile uses bottom footer dock) */}
+          {/* Navigation Tabs - Hidden on mobile, shown on desktop */}
           <nav className="hidden md:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
+              const IconComp = link.icon;
               return (
                 <Link
                   key={link.path}
@@ -65,7 +73,7 @@ export function ApplicantNavbar() {
                       : "text-ink-soft hover:text-ink hover:bg-white"
                   }`}
                 >
-                  <span className="text-xs">{link.icon}</span>
+                  <IconComp size={15} />
                   <span>{link.name}</span>
                 </Link>
               );

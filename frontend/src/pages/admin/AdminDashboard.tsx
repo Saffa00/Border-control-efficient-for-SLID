@@ -4,6 +4,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+import {
+  Users, UserPlus, FileText, FileCheck2, MapPin, FileBarChart2,
+  Clock, ShieldAlert, ShieldCheck, BarChart3, PieChart as PieIcon,
+  Compass, ArrowUpRight, CheckCircle2, AlertTriangle, XCircle
+} from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
@@ -28,10 +33,11 @@ const RISK_COLORS: Record<string, string> = {
 interface KPI {
   label: string;
   value: number | string;
-  icon: string;
+  icon: any;
   color: string;
   borderColor: string;
   bgColor: string;
+  iconColor: string;
   subtext: string;
   link: string;
 }
@@ -85,40 +91,44 @@ export default function AdminDashboard() {
         {
           label: "Total Applications",
           value: appsRes.data?.length ?? 0,
-          icon: "📑",
+          icon: FileText,
           color: "text-[#0B4F6C]",
           borderColor: "border-sky-200",
           bgColor: "bg-sky-50",
+          iconColor: "text-sky-700",
           subtext: "e-Visa Filings Registry",
           link: "/visa-officer",
         },
         {
           label: "Border Crossings",
           value: logsRes.data?.length ?? 0,
-          icon: "🛂",
+          icon: ShieldCheck,
           color: "text-[#1E8E5A]",
           borderColor: "border-emerald-200",
           bgColor: "bg-emerald-50",
+          iconColor: "text-emerald-700",
           subtext: "Logged at 5 Checkpoints",
           link: "/border/check-in",
         },
         {
           label: "Active Overstays",
           value: overstayRes.count ?? 0,
-          icon: "⏳",
+          icon: Clock,
           color: "text-amber-700",
           borderColor: "border-amber-200",
           bgColor: "bg-amber-50",
+          iconColor: "text-amber-700",
           subtext: "$50/Day Penalty Ledger",
           link: "/border/overstays",
         },
         {
           label: "Watchlist Interceptions",
           value: watchlistRes.count ?? 0,
-          icon: "🚨",
+          icon: ShieldAlert,
           color: "text-purple-700",
           borderColor: "border-purple-200",
           bgColor: "bg-purple-50",
+          iconColor: "text-purple-700",
           subtext: "INTERPOL & Security Desk",
           link: "/border/watchlist",
         },
@@ -133,35 +143,39 @@ export default function AdminDashboard() {
   const quickActions = [
     {
       title: "Staff & Officers",
-      desc: "Provision accounts, assign stations & access roles",
-      icon: "👥",
+      desc: "Provision accounts, assign stations & permissions",
+      icon: Users,
       path: "/admin/users",
       badge: "Manage Users",
       color: "bg-purple-50 hover:bg-purple-100/80 border-purple-200 text-purple-900",
+      iconBg: "bg-purple-100 text-purple-700",
     },
     {
       title: "Visa Adjudication",
-      desc: "Live consular processing queue and approvals",
-      icon: "🛂",
+      desc: "Live consular processing queue and decisions",
+      icon: FileCheck2,
       path: "/visa-officer",
       badge: "Consular Desk",
       color: "bg-sky-50 hover:bg-sky-100/80 border-sky-200 text-sky-900",
+      iconBg: "bg-sky-100 text-sky-700",
     },
     {
       title: "Border Checkpoints",
       desc: "Inspect ports of entry, airports & land borders",
-      icon: "🗺️",
+      icon: MapPin,
       path: "/admin/checkpoints",
-      badge: "Stations",
+      badge: "5 Stations",
       color: "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 text-emerald-900",
+      iconBg: "bg-emerald-100 text-emerald-700",
     },
     {
       title: "A4 PDF Executive Reports",
       desc: "Generate official national immigration intelligence",
-      icon: "📑",
+      icon: FileBarChart2,
       path: "/admin/reports",
-      badge: "Intelligence",
+      badge: "Official Intelligence",
       color: "bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-900",
+      iconBg: "bg-amber-100 text-amber-700",
     },
   ];
 
@@ -181,8 +195,8 @@ export default function AdminDashboard() {
                 Republic of Sierra Leone • Directorate Headquarters
               </span>
             </div>
-            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white">
-              Command Center &amp; National Analytics
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2.5">
+              <span>Command Center &amp; National Analytics</span>
             </h1>
             <p className="text-xs sm:text-sm text-purple-100/90 mt-1 max-w-2xl leading-relaxed">
               Real-time oversight of national border checkpoints, biometric passport records, visa adjudication throughput, and revenue ledgers.
@@ -192,16 +206,16 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap gap-2.5 relative z-10 w-full sm:w-auto">
             <Link
               to="/admin/users"
-              className="flex-1 sm:flex-initial bg-[#1E8E5A] hover:bg-[#166E46] active:scale-95 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-[#1E8E5A] hover:bg-[#166E46] active:scale-95 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition shadow-md flex items-center justify-center gap-2"
             >
-              <span>👥</span>
+              <UserPlus size={16} />
               <span>+ Provision Staff</span>
             </Link>
             <Link
               to="/admin/reports"
-              className="flex-1 sm:flex-initial bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition backdrop-blur-md flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-initial bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl font-semibold text-xs transition backdrop-blur-md flex items-center justify-center gap-2"
             >
-              <span>📑</span>
+              <FileBarChart2 size={16} />
               <span>A4 PDF Reports</span>
             </Link>
           </div>
@@ -216,53 +230,60 @@ export default function AdminDashboard() {
           <>
             {/* 2. 4 Sovereign KPI Metric Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
-              {kpis.map((kpi) => (
-                <Link
-                  to={kpi.link}
-                  key={kpi.label}
-                  className={`bg-white border-2 ${kpi.borderColor} rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group`}
-                >
-                  <div className="flex items-center justify-between mb-2 sm:mb-3">
-                    <span className={`p-2 rounded-xl ${kpi.bgColor} text-lg sm:text-xl group-hover:scale-110 transition-transform`}>
-                      {kpi.icon}
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
-                      Live &rarr;
-                    </span>
-                  </div>
-                  <div>
-                    <p className={`font-mono text-2xl sm:text-3xl font-bold ${kpi.color}`}>
-                      {kpi.value}
-                    </p>
-                    <p className="text-xs font-bold text-ink mt-0.5 sm:mt-1">{kpi.label}</p>
-                    <p className="text-[10px] text-ink-soft mt-0.5">{kpi.subtext}</p>
-                  </div>
-                </Link>
-              ))}
+              {kpis.map((kpi) => {
+                const IconComponent = kpi.icon;
+                return (
+                  <Link
+                    to={kpi.link}
+                    key={kpi.label}
+                    className={`bg-white border-2 ${kpi.borderColor} rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between group`}
+                  >
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className={`p-2.5 rounded-xl ${kpi.bgColor} ${kpi.iconColor} group-hover:scale-110 transition-transform`}>
+                        <IconComponent size={20} />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded-full flex items-center gap-1 group-hover:bg-primary group-hover:text-white transition">
+                        <span>Live</span>
+                        <ArrowUpRight size={12} />
+                      </span>
+                    </div>
+                    <div>
+                      <p className={`font-mono text-2xl sm:text-3xl font-bold ${kpi.color}`}>
+                        {kpi.value}
+                      </p>
+                      <p className="text-xs font-bold text-ink mt-0.5 sm:mt-1">{kpi.label}</p>
+                      <p className="text-[10px] text-ink-soft mt-0.5">{kpi.subtext}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* 3. Executive Quick Command Shortcuts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-              {quickActions.map((qa) => (
-                <Link
-                  key={qa.path}
-                  to={qa.path}
-                  className={`p-4 rounded-2xl border ${qa.color} transition shadow-2xs hover:shadow-sm flex items-start gap-3 group`}
-                >
-                  <span className="text-2xl p-2 bg-white rounded-xl shadow-2xs group-hover:scale-110 transition-transform flex-shrink-0">
-                    {qa.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <h3 className="text-xs font-bold text-ink truncate">{qa.title}</h3>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-ink-soft border border-zinc-200">
-                        {qa.badge}
-                      </span>
+              {quickActions.map((qa) => {
+                const IconComponent = qa.icon;
+                return (
+                  <Link
+                    key={qa.path}
+                    to={qa.path}
+                    className={`p-4 rounded-2xl border ${qa.color} transition shadow-2xs hover:shadow-sm flex items-start gap-3.5 group`}
+                  >
+                    <div className={`p-2.5 rounded-xl ${qa.iconBg} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                      <IconComponent size={20} />
                     </div>
-                    <p className="text-[11px] text-ink-soft leading-snug line-clamp-2">{qa.desc}</p>
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <h3 className="text-xs font-bold text-ink truncate">{qa.title}</h3>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/80 text-ink-soft border border-zinc-200">
+                          {qa.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-ink-soft leading-snug line-clamp-2">{qa.desc}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* 4. Visa Applications by Status */}
@@ -270,7 +291,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between mb-4 sm:mb-6 pb-3 border-b border-primary-light/60">
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-ink flex items-center gap-2">
-                    <span>📊</span>
+                    <BarChart3 size={18} className="text-[#0B4F6C]" />
                     <span>Visa Applications by Adjudication Status</span>
                   </h2>
                   <p className="text-[11px] sm:text-xs text-ink-soft mt-0.5">
@@ -279,9 +300,10 @@ export default function AdminDashboard() {
                 </div>
                 <Link
                   to="/visa-officer"
-                  className="text-xs font-semibold text-primary hover:underline hidden sm:inline"
+                  className="text-xs font-semibold text-primary hover:underline hidden sm:flex items-center gap-1"
                 >
-                  Open Visa Queue &rarr;
+                  <span>Open Visa Queue</span>
+                  <ArrowUpRight size={14} />
                 </Link>
               </div>
 
@@ -305,6 +327,7 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
               ) : (
                 <div className="py-12 text-center border-2 border-dashed border-primary-light/80 rounded-2xl bg-white/50">
+                  <FileText size={32} className="mx-auto text-zinc-400 mb-2" />
                   <p className="text-sm font-semibold text-ink">No Visa Applications Submitted Yet</p>
                   <p className="text-xs text-ink-soft mt-1">
                     When applicants file via the public portal, real-time statistics will populate here.
@@ -318,7 +341,7 @@ export default function AdminDashboard() {
               {/* Crossings by checkpoint */}
               <SecurityPaperPanel className="p-5 sm:p-8">
                 <h2 className="text-sm sm:text-base font-bold text-ink mb-1 flex items-center gap-2">
-                  <span>🗺️</span>
+                  <Compass size={18} className="text-[#1E8E5A]" />
                   <span>Crossings by Point of Entry</span>
                 </h2>
                 <p className="text-[11px] sm:text-xs text-ink-soft mb-4 sm:mb-6">Traffic volume across all 5 national stations</p>
@@ -340,6 +363,7 @@ export default function AdminDashboard() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="py-12 text-center border-2 border-dashed border-primary-light/80 rounded-2xl bg-white/50">
+                    <MapPin size={32} className="mx-auto text-zinc-400 mb-2" />
                     <p className="text-sm font-semibold text-ink">No Border Crossings Recorded</p>
                     <p className="text-xs text-ink-soft mt-1">
                       Check-in events processed at air, land, and sea checkpoints will appear here.
@@ -351,7 +375,7 @@ export default function AdminDashboard() {
               {/* Decision breakdown */}
               <SecurityPaperPanel className="p-5 sm:p-8">
                 <h2 className="text-sm sm:text-base font-bold text-ink mb-1 flex items-center gap-2">
-                  <span>🛡️</span>
+                  <PieIcon size={18} className="text-purple-700" />
                   <span>Border Clearance Decisions</span>
                 </h2>
                 <p className="text-[11px] sm:text-xs text-ink-soft mb-4 sm:mb-6">Cleared vs. secondary screening vs. refused</p>
@@ -380,6 +404,7 @@ export default function AdminDashboard() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="py-12 text-center border-2 border-dashed border-primary-light/80 rounded-2xl bg-white/50">
+                    <ShieldCheck size={32} className="mx-auto text-zinc-400 mb-2" />
                     <p className="text-sm font-semibold text-ink">No Decision Metrics Available</p>
                     <p className="text-xs text-ink-soft mt-1">
                       Breakdown of cleared, secondary screening, and refused crossings will show here.

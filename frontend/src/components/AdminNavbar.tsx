@@ -1,4 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  MapPin,
+  FileBarChart2,
+  ShieldCheck,
+  FileCheck2,
+  Compass,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
 import { UserProfileMenu } from "./UserProfileMenu";
@@ -8,16 +17,16 @@ export function AdminNavbar() {
   const location = useLocation();
 
   const navLinks = [
-    { name: "Executive Overview", path: "/admin", icon: "📊" },
-    { name: "Staff & Users", path: "/admin/users", icon: "👥" },
-    { name: "Border Checkpoints", path: "/admin/checkpoints", icon: "🗺️" },
-    { name: "A4 PDF Reports", path: "/admin/reports", icon: "📑" },
-    { name: "Security Audit Log", path: "/admin/audit-log", icon: "🔒" },
+    { name: "Executive Overview", path: "/admin", icon: LayoutDashboard },
+    { name: "Staff & Users", path: "/admin/users", icon: Users },
+    { name: "Border Checkpoints", path: "/admin/checkpoints", icon: MapPin },
+    { name: "A4 PDF Reports", path: "/admin/reports", icon: FileBarChart2 },
+    { name: "Security Audit Log", path: "/admin/audit-log", icon: ShieldCheck },
   ];
 
   const portalLinks = [
-    { name: "Visa Portal", path: "/visa-officer", icon: "🛂" },
-    { name: "Border Portal", path: "/border/check-in", icon: "🛡️" },
+    { name: "Visa Portal", path: "/visa-officer", icon: FileCheck2 },
+    { name: "Border Portal", path: "/border/check-in", icon: Compass },
   ];
 
   return (
@@ -58,10 +67,11 @@ export function AdminNavbar() {
             </div>
           </Link>
 
-          {/* Navigation Tabs - Hidden on mobile, shown on desktop (mobile uses bottom footer dock) */}
+          {/* Navigation Tabs - Hidden on mobile, shown on desktop */}
           <nav className="hidden md:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
+              const IconComp = link.icon;
               return (
                 <Link
                   key={link.path}
@@ -72,7 +82,7 @@ export function AdminNavbar() {
                       : "text-ink-soft hover:text-ink hover:bg-white"
                   }`}
                 >
-                  <span>{link.icon}</span>
+                  <IconComp size={15} />
                   <span>{link.name}</span>
                 </Link>
               );
@@ -82,16 +92,19 @@ export function AdminNavbar() {
           {/* Quick Operational Portal Switchers & User Profile Menu */}
           <div className="flex items-center gap-2 sm:gap-3.5">
             <div className="hidden xl:flex items-center gap-1 border-r border-primary-light/70 pr-3">
-              {portalLinks.map((portal) => (
-                <Link
-                  key={portal.path}
-                  to={portal.path}
-                  className="text-[11px] font-semibold text-primary hover:text-primary-dark px-2.5 py-1.5 rounded-lg hover:bg-primary-light/30 transition flex items-center gap-1"
-                >
-                  <span>{portal.icon}</span>
-                  <span>{portal.name} &rarr;</span>
-                </Link>
-              ))}
+              {portalLinks.map((portal) => {
+                const IconComp = portal.icon;
+                return (
+                  <Link
+                    key={portal.path}
+                    to={portal.path}
+                    className="text-[11px] font-semibold text-primary hover:text-primary-dark px-2.5 py-1.5 rounded-lg hover:bg-primary-light/30 transition flex items-center gap-1.5"
+                  >
+                    <IconComp size={14} />
+                    <span>{portal.name} &rarr;</span>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Profile Avatar with Photo Upload & Sign Out Icon */}

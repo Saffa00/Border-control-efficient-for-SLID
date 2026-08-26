@@ -1,4 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
+import {
+  FileCheck2,
+  Compass,
+  QrCode,
+  ShieldAlert,
+  Clock,
+  Landmark,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
 import { UserProfileMenu } from "./UserProfileMenu";
@@ -62,7 +70,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
             </div>
           </Link>
 
-          {/* Navigation Tabs - Hidden on mobile, shown on desktop (mobile uses bottom footer dock) */}
+          {/* Navigation Tabs - Hidden on mobile, shown on desktop */}
           <nav className="hidden md:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
             <Link
               to="/visa-officer"
@@ -72,7 +80,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
                   : "text-ink-soft hover:text-ink hover:bg-white"
               }`}
             >
-              <span>📋</span>
+              <FileCheck2 size={15} />
               <span>Visa Queue</span>
             </Link>
 
@@ -84,7 +92,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
                   : "text-ink-soft hover:text-ink hover:bg-white"
               }`}
             >
-              <span>🛂</span>
+              <Compass size={15} />
               <span>Border Check-in</span>
             </Link>
 
@@ -96,7 +104,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
                   : "text-ink-soft hover:text-ink hover:bg-white"
               }`}
             >
-              <span>📷</span>
+              <QrCode size={15} />
               <span>QR Scanner</span>
             </Link>
 
@@ -108,7 +116,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
                   : "text-ink-soft hover:text-ink hover:bg-white"
               }`}
             >
-              <span>🚨</span>
+              <ShieldAlert size={15} />
               <span>Watchlist</span>
             </Link>
 
@@ -120,7 +128,7 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
                   : "text-ink-soft hover:text-ink hover:bg-white"
               }`}
             >
-              <span>⏳</span>
+              <Clock size={15} />
               <span>Overstays</span>
             </Link>
           </nav>
@@ -130,9 +138,9 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
             {profile?.role === "admin" && (
               <Link
                 to="/admin"
-                className="hidden lg:inline-flex items-center gap-1 text-xs text-purple-700 font-semibold border border-purple-300 bg-purple-50 hover:bg-purple-700 hover:text-white px-3 py-1.5 rounded-lg transition"
+                className="hidden lg:inline-flex items-center gap-1.5 text-xs text-purple-700 font-semibold border border-purple-300 bg-purple-50 hover:bg-purple-700 hover:text-white px-3 py-1.5 rounded-lg transition"
               >
-                <span>🏛️</span>
+                <Landmark size={14} />
                 <span>Admin Console</span>
               </Link>
             )}
