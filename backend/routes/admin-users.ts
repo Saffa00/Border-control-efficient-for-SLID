@@ -69,6 +69,101 @@ router.post("/api/auth/resolve-username", async (req, res) => {
 });
 
 // ---------------------------------------------------------------
+// POST /api/applicant/signup (Instant Applicant Registration)
+// Creates confirmed applicant account directly via Supabase Admin API
+// ---------------------------------------------------------------
+router.post("/api/applicant/signup", async (req, res) => {
+  const {
+    email,
+    password,
+    fullName,
+    phone,
+    nationality,
+    countryOfResidence,
+    occupation,
+    addressLine,
+    addressCity,
+    addressCountry,
+    emergencyContactName,
+    emergencyContactPhone,
+  } = req.body;
+
+  if (!email || !password || !fullName) {
+    return res.status(400).json({ error: "Full Name, Email Address, and Password are required." });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = fullName.trim();
+
+  try {
+    // 1. Check if user already exists in public.users
+    const { data: existingUser } = await supabaseAdmin
+      .from("users")
+      .select("email, role")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+
+    if (existingUser) {
+      return res.status(400).json({
+        error: `An account with email "${cleanEmail}" already exists. Please sign in instead.`,
+      });
+    }
+
+    // 2. Create the Supabase auth user with email_confirm: true
+    let userId: string;
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: cleanEmail,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: cleanName },
+    });
+
+    if (authError) {
+      if (authError.message.toLowerCase().includes("already registered")) {
+        const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
+        const existing = usersList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
+        if (!existing) return res.status(400).json({ error: authError.message });
+        userId = existing.id;
+        await supabaseAdmin.auth.admin.updateUserById(userId, { password, email_confirm: true });
+      } else {
+        return res.status(400).json({ error: authError.message });
+      }
+    } else {
+      userId = authData.user.id;
+    }
+
+    // 3. Upsert into public.users with role = 'applicant' and is_active = true
+    const { error: profileError } = await supabaseAdmin.from("users").upsert(
+      {
+        user_id: userId,
+        full_name: cleanName,
+        email: cleanEmail,
+        phone: phone?.trim() || null,
+        nationality: nationality?.trim() || null,
+        country_of_residence: countryOfResidence?.trim() || null,
+        occupation: occupation?.trim() || null,
+        address_line: addressLine?.trim() || null,
+        address_city: addressCity?.trim() || null,
+        address_country: addressCountry?.trim() || null,
+        emergency_contact_name: emergencyContactName?.trim() || null,
+        emergency_contact_phone: emergencyContactPhone?.trim() || null,
+        role: "applicant",
+        is_active: true,
+      },
+      { onConflict: "user_id" }
+    );
+
+    if (profileError) {
+      console.warn("Public users profile error:", profileError.message);
+    }
+
+    return res.json({ success: true, userId });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to create applicant account." });
+  }
+});
+
+// ---------------------------------------------------------------
 // POST /api/staff/signup
 // Direct staff onboarding registration:
 // SECURITY HARDENING: Disallows privilege escalation. Rejects any

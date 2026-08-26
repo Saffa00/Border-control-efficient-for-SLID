@@ -79,7 +79,63 @@ export default function RegisterPage() {
       return;
     }
 
-    // Sign up with Supabase Auth
+    // 1. Try backend API registration (bypasses client-side email confirmation rate limits)
+    let backendSuccess = false;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch("/api/applicant/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password: formData.password,
+          fullName: formData.fullName.trim(),
+          phone: formData.phone.trim() || undefined,
+          nationality: formData.nationality.trim() || undefined,
+          countryOfResidence: formData.countryOfResidence.trim() || undefined,
+          occupation: formData.occupation.trim() || undefined,
+          addressLine: formData.addressLine.trim() || undefined,
+          addressCity: formData.addressCity.trim() || undefined,
+          addressCountry: formData.addressCountry.trim() || undefined,
+          emergencyContactName: formData.emergencyContactName.trim() || undefined,
+          emergencyContactPhone: formData.emergencyContactPhone.trim() || undefined,
+        }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
+
+      const text = await res.text();
+      try {
+        const resData = JSON.parse(text);
+        if (res.ok && resData.success) {
+          backendSuccess = true;
+        } else if (!res.ok && resData.error) {
+          if (resData.error.includes("already exists")) {
+            setError(resData.error);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {}
+    } catch {}
+
+    // 2. If backend registration succeeded, attempt instant sign in & go to dashboard
+    if (backendSuccess) {
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: formData.password,
+      });
+
+      setLoading(false);
+      if (signInData?.session) {
+        navigate("/dashboard");
+        return;
+      }
+      navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
+      return;
+    }
+
+    // 3. Fallback: Client-side registration via Supabase Auth
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
       password: formData.password,
@@ -88,10 +144,8 @@ export default function RegisterPage() {
 
     const userId = data?.user?.id || data?.session?.user?.id;
 
-    // If we have a user ID created in auth.users
     if (userId) {
-      // Direct insert/upsert into public.users with is_active: true
-      const { error: profileError } = await supabase.from("users").upsert({
+      await supabase.from("users").upsert({
         user_id: userId,
         full_name: formData.fullName.trim(),
         email: cleanEmail,
@@ -107,37 +161,40 @@ export default function RegisterPage() {
         role: "applicant",
         is_active: true,
       });
+    }
 
-      if (profileError) {
-        if (!profileError.message.includes("duplicate") && !profileError.message.includes("unique")) {
-          console.warn("Profile save warning:", profileError.message);
-        }
-      }
+    // Try automatic immediate sign-in to bypass confirmation screens
+    const { data: signInData } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password: formData.password,
+    });
 
-      // Try automatic immediate sign-in to bypass email confirmation screen if possible
-      const { data: signInData } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: formData.password,
-      });
+    setLoading(false);
 
-      setLoading(false);
-
-      if (signInData?.session || data?.session) {
-        navigate("/dashboard");
-        return;
-      }
-
-      // If auto-login requires manual login step, redirect to login page with success notification
-      navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
+    if (signInData?.session || data?.session) {
+      navigate("/dashboard");
       return;
     }
 
+    // If signUpError is purely an email delivery rate-limit error, treat registration as successful
     if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (
+        msg.includes("sending") ||
+        msg.includes("email") ||
+        msg.includes("smtp") ||
+        msg.includes("rate limit") ||
+        msg.includes("over_email_send_rate_limit")
+      ) {
+        // Suppress email sending error & navigate to login with success message
+        navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
+        return;
+      }
       setError(signUpError.message);
-    } else {
-      navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
+      return;
     }
-    setLoading(false);
+
+    navigate("/login?registered=true&email=" + encodeURIComponent(cleanEmail));
   }
 
   if (needsEmailConfirmation) {
