@@ -52,6 +52,7 @@ import { ApplicantAiChatbot } from "./components/ApplicantAiChatbot";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { PWAOfflineBanner } from "./components/PWAOfflineBanner";
 import { MobileAppBottomNav } from "./components/MobileAppBottomNav";
+import { MobileBackButton } from "./components/MobileBackButton";
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
         <PWAInstallPrompt />
         <LiveNotificationToast />
         <ApplicantAiChatbot />
+        <MobileBackButton />
         <MobileAppBottomNav />
         <Routes>
           {/* Initial Portal Selector ("Who are you? Select Role Portal") */}
