@@ -55,15 +55,51 @@ export default function LoginPage() {
     }
     setLoading(true);
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+    const cleanEmail = email.trim().toLowerCase();
+
+    let { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: cleanEmail,
       password,
     });
+
+    // Auto-healing fallback for accounts whose registration was interrupted by Supabase email limits
+    if (signInError && signInError.message === "Invalid login credentials") {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch("/api/applicant/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cleanEmail,
+            password: password,
+            fullName: cleanEmail.split("@")[0],
+          }),
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId));
+
+        const text = await res.text();
+        try {
+          const resData = JSON.parse(text);
+          if (res.ok && resData.success) {
+            // Account created & activated — retry login immediately
+            const retry = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password,
+            });
+            if (retry.data?.session) {
+              data = retry.data;
+              signInError = null;
+            }
+          }
+        } catch {}
+      } catch {}
+    }
 
     if (signInError) {
       setError(
         signInError.message === "Invalid login credentials"
-          ? "Incorrect email or password. If you just confirmed your email, please wait a moment then try again."
+          ? "Incorrect password for this account. If you forgot your password, tap 'Forgot password?' above to reset it."
           : signInError.message
       );
       setLoading(false);
