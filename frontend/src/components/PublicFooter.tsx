@@ -12,42 +12,45 @@ export function PublicFooter() {
       </div>
 
       {/* 2. Top Horizontal Navbar Alignment Sub-Strip */}
-      <div className="border-b border-white/10 bg-[#080E1A]/90 px-6 sm:px-10 lg:px-12 py-3">
+      <div className="border-b border-white/15 bg-[#072A3A] px-6 sm:px-10 lg:px-12 py-3.5 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-2 text-zinc-300">
-            <SierraLeoneFlag width={18} height={12} />
+          <div className="flex items-center gap-2 text-white">
+            <SierraLeoneFlag width={20} height={13} />
             <span className="font-bold text-white uppercase tracking-wider text-[11px]">
-              SLID Institutional Portal
+              SLID Institutional Gateway
             </span>
-            <span className="text-zinc-600 hidden sm:inline">•</span>
-            <span className="text-emerald-400 hidden sm:inline text-[11px]">
-              Official Government Directory
+            <span className="text-slate-500 hidden sm:inline">•</span>
+            <span className="text-emerald-400 font-semibold hidden sm:inline text-[11px]">
+              Republic of Sierra Leone
             </span>
           </div>
 
           {/* Clean Horizontal Navbar Links */}
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold">
-            <Link to="/" className="text-zinc-300 hover:text-emerald-400 transition">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+            <Link to="/" className="text-white hover:text-emerald-400 transition font-medium">
               Home
             </Link>
-            <span className="text-zinc-700">•</span>
-            <Link to="/about" className="text-zinc-300 hover:text-emerald-400 transition">
+            <span className="text-slate-500">•</span>
+            <Link to="/about" className="text-white hover:text-emerald-400 transition font-medium">
               About
             </Link>
-            <span className="text-zinc-700">•</span>
-            <Link to="/services" className="text-zinc-300 hover:text-emerald-400 transition">
+            <span className="text-slate-500">•</span>
+            <Link to="/services" className="text-white hover:text-emerald-400 transition font-medium">
               Services
             </Link>
-            <span className="text-zinc-700">•</span>
-            <Link to="/borders" className="text-zinc-300 hover:text-emerald-400 transition">
+            <span className="text-slate-500">•</span>
+            <Link to="/borders" className="text-white hover:text-emerald-400 transition font-medium">
               Borders &amp; Checkpoints
             </Link>
-            <span className="text-zinc-700">•</span>
-            <Link to="/contact" className="text-zinc-300 hover:text-emerald-400 transition">
+            <span className="text-slate-500">•</span>
+            <Link to="/contact" className="text-white hover:text-emerald-400 transition font-medium">
               Contact
             </Link>
-            <span className="text-zinc-700">•</span>
-            <Link to="/staff/login" className="text-amber-400 hover:text-amber-300 transition">
+            <span className="text-slate-500">•</span>
+            <Link
+              to="/staff/login"
+              className="text-amber-300 hover:text-amber-200 transition font-bold bg-white/10 px-2.5 py-1 rounded-lg border border-amber-300/30"
+            >
               Staff Portal &rarr;
             </Link>
           </div>

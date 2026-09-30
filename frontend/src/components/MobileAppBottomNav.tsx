@@ -109,7 +109,7 @@ export function MobileAppBottomNav() {
   else if (
     path.startsWith("/dashboard") ||
     path.startsWith("/passport") ||
-    path.startsWith("/visa") ||        // covers /visa/new, /visa/:id/status, /visa/:id/payment
+    path.startsWith("/visa") ||
     path.startsWith("/status") ||
     path.startsWith("/payment") ||
     path.startsWith("/notifications") ||
@@ -130,10 +130,10 @@ export function MobileAppBottomNav() {
 
   return (
     <nav
-      aria-label="Mobile Bottom App Navigation"
-      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0B4F6C]/97 backdrop-blur-xl border-t border-white/15 text-white shadow-2xl px-1 py-1 pb-[max(0.4rem,env(safe-area-inset-bottom))]"
+      aria-label="Official Mobile App Bottom Navigation"
+      className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#072A3A] border-t-2 border-[#1E8E5A] text-white shadow-2xl px-2 py-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))]"
     >
-      <div className="flex items-center justify-around max-w-md mx-auto">
+      <div className="flex items-center justify-around max-w-md mx-auto gap-1">
         {tabs.map((tab) => {
           const isActive = tab.exact
             ? path === tab.path
@@ -144,21 +144,17 @@ export function MobileAppBottomNav() {
             <Link
               key={tab.name + tab.path}
               to={tab.path}
-              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-200 relative min-w-[52px] ${
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors duration-150 flex-1 min-w-[54px] ${
                 isActive
-                  ? "text-amber-400 font-bold scale-105 bg-white/10"
-                  : "text-slate-300/90 hover:text-white active:scale-95"
+                  ? "bg-[#1E8E5A] text-white font-bold shadow-sm"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
               }`}
             >
-              {/* Active top dot indicator */}
-              {isActive && (
-                <span className="absolute -top-0.5 w-5 h-0.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400/60" />
-              )}
               <IconComp
-                size={isActive ? 22 : 20}
+                size={19}
                 strokeWidth={isActive ? 2.5 : 1.8}
               />
-              <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px] leading-none">
+              <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px] leading-tight font-medium">
                 {tab.name}
               </span>
             </Link>
