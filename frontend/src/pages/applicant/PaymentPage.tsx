@@ -150,7 +150,16 @@ export default function PaymentPage() {
             <p className="text-sm text-ink-soft">{application.visa_types?.name}</p>
           </div>
           <p className="font-mono text-3xl font-semibold mb-1">${amountUsd.toFixed(2)}</p>
-          <p className="text-xs text-ink-soft mb-6">≈ NLe {amountNle.toFixed(2)} at today's rate</p>
+          <p className="text-xs text-ink-soft mb-4">≈ NLe {amountNle.toFixed(2)} at today's rate</p>
+
+          {/* Simulation Disclaimer Banner */}
+          <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 mb-5 text-xs text-sky-900 flex items-center gap-2">
+            <span className="text-base">💳</span>
+            <div>
+              <p className="font-bold">Sandbox Payment Engine</p>
+              <p className="text-[11px] text-sky-700 leading-snug">Demonstration Mode: Simulates real-time Mobile Money transaction status and updates e-Visa filing.</p>
+            </div>
+          </div>
 
           <label className="block text-sm font-medium mb-1.5">Payment method</label>
           <div className="flex gap-3 mb-4">
