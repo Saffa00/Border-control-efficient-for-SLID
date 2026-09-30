@@ -34,15 +34,8 @@ export function AdminNavbar() {
 
   return (
     <header className="sticky top-0 z-50 shadow-md">
-      {/* 1. National Tri-Color Strip */}
-      <div className="h-1.5 w-full grid grid-cols-3 shadow-xs">
-        <div className="bg-[#1E8E5A]"></div>
-        <div className="bg-white"></div>
-        <div className="bg-[#0B4F6C]"></div>
-      </div>
-
-      {/* 2. Main Executive Header */}
-      <div className="border-b border-purple-200 bg-white/95 backdrop-blur-md">
+      {/* Main Executive Header */}
+      <div className="border-b border-zinc-200 bg-white/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3">
           {/* Left: Brand Logo & Welcome Greeting */}
           <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
@@ -57,63 +50,61 @@ export function AdminNavbar() {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <SierraLeoneFlag width={14} height={9} />
-                <span className="text-[10px] sm:text-xs font-bold text-ink">
-                  Welcome, {firstName}
+                <span className="text-[10px] sm:text-xs font-bold text-zinc-900">
+                  Welcome, Administrator {firstName}
                 </span>
-                <span className="text-[8px] sm:text-[9px] uppercase font-bold bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.2 rounded-full">
-                  Admin
+                <span className="text-[8px] sm:text-[9px] uppercase font-bold bg-zinc-100 text-zinc-800 border border-zinc-300 px-1.5 py-0.2 rounded-full">
+                  Directorate Admin
                 </span>
               </div>
-              <span className="text-[10px] text-ink-soft hidden sm:block">
-                National Central Administration • Executive Console
+              <span className="text-[10px] text-zinc-500 hidden sm:block">
+                Sierra Leone Immigration Department • Command Center
               </span>
             </div>
           </div>
 
-          {/* Center: Navigation Tabs (Desktop only) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
+          {/* Center: Desktop Nav Links */}
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
-              const IconComp = link.icon;
+              const IconComponent = link.icon;
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                     isActive
-                      ? "bg-[#4C1D95] text-white shadow-xs"
-                      : "text-ink-soft hover:text-ink hover:bg-white"
+                      ? "bg-[#002B49] text-white"
+                      : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
                   }`}
                 >
-                  <IconComp size={15} />
+                  <IconComponent size={14} />
                   <span>{link.name}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right: Quick Portals, Notification Bell, Profile Avatar */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="hidden xl:flex items-center gap-1 border-r border-primary-light/70 pr-3">
-              {portalLinks.map((portal) => {
-                const IconComp = portal.icon;
+          {/* Right: Portal Switches & Profile Menu */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 pr-2 border-r border-zinc-200">
+              {portalLinks.map((pl) => {
+                const IconComp = pl.icon;
                 return (
                   <Link
-                    key={portal.path}
-                    to={portal.path}
-                    className="text-[11px] font-semibold text-primary hover:text-primary-dark px-2 py-1 rounded-lg hover:bg-primary-light/30 transition flex items-center gap-1"
+                    key={pl.path}
+                    to={pl.path}
+                    className="text-[11px] font-bold text-zinc-600 hover:text-[#002B49] hover:bg-zinc-100 px-2 py-1 rounded transition flex items-center gap-1"
+                    title={`Switch to ${pl.name}`}
                   >
                     <IconComp size={13} />
-                    <span>{portal.name}</span>
+                    <span>{pl.name}</span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Real Notification Bell Icon */}
             <NotificationBellMenu />
-
-            {/* Profile Dropdown with Upload Photo, Change Password, Settings, Sign Out */}
             <UserProfileMenu roleTheme="admin" />
           </div>
         </div>

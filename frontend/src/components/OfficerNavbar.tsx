@@ -27,15 +27,8 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
 
   return (
     <header className="sticky top-0 z-50 shadow-md">
-      {/* 1. National Tri-Color Strip */}
-      <div className="h-1.5 w-full grid grid-cols-3 shadow-xs">
-        <div className="bg-[#1E8E5A]"></div>
-        <div className="bg-white"></div>
-        <div className="bg-[#0B4F6C]"></div>
-      </div>
-
-      {/* 2. Main Executive Header */}
-      <div className="border-b border-primary-light/80 bg-white/95 backdrop-blur-md">
+      {/* Main Executive Header */}
+      <div className="border-b border-zinc-200 bg-white/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3">
           {/* Left: Brand Logo & Welcome Greeting */}
           <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
@@ -53,97 +46,91 @@ export function OfficerNavbar({ title = "Officer Operational Console" }: { title
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <SierraLeoneFlag width={14} height={9} />
-                <span className="text-[10px] sm:text-xs font-bold text-ink">
-                  Welcome, {firstName}
+                <span className="text-[10px] sm:text-xs font-bold text-zinc-900">
+                  Welcome, Officer {firstName}
                 </span>
-                <span
-                  className={`text-[8px] sm:text-[9px] uppercase font-bold px-1.5 py-0.2 rounded-full border ${
-                    isVisaRole
-                      ? "bg-amber-100 text-amber-900 border-amber-300"
-                      : "bg-emerald-100 text-emerald-900 border-emerald-300"
-                  }`}
-                >
-                  {isVisaRole ? "Visa Desk" : "Border Desk"}
+                <span className="text-[8px] sm:text-[9px] uppercase font-bold px-1.5 py-0.2 rounded-full border bg-zinc-100 text-zinc-800 border-zinc-300">
+                  {isVisaRole ? "Consular Desk" : "Border Control"}
                 </span>
               </div>
-              <span className="text-[10px] text-ink-soft hidden sm:block">
-                {title} • Department of Immigration
+              <span className="text-[10px] text-zinc-500 hidden sm:block">
+                Sierra Leone Immigration Department • {title}
               </span>
             </div>
           </div>
 
-          {/* Center: Navigation Tabs (Desktop only) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-canvas p-1 rounded-xl border border-primary-light/70 shadow-inner">
+          {/* Center: Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-1">
             <Link
               to="/visa-officer"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                 isVisaQueue
-                  ? "bg-[#0B4F6C] text-white shadow-xs"
-                  : "text-ink-soft hover:text-ink hover:bg-white"
+                  ? "bg-[#002B49] text-white"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <FileCheck2 size={15} />
-              <span>Visa Queue</span>
+              <FileCheck2 size={14} />
+              <span>Visa Adjudication Queue</span>
             </Link>
 
             <Link
               to="/border/check-in"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                 isBorderCheck
-                  ? "bg-[#1E8E5A] text-white shadow-xs"
-                  : "text-ink-soft hover:text-ink hover:bg-white"
+                  ? "bg-[#002B49] text-white"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <Compass size={15} />
+              <Compass size={14} />
               <span>Border Check-in</span>
             </Link>
 
             <Link
               to="/border/verify"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                 isQRVerify
-                  ? "bg-primary text-white shadow-xs"
-                  : "text-ink-soft hover:text-ink hover:bg-white"
+                  ? "bg-[#002B49] text-white"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <QrCode size={15} />
-              <span>QR Scanner</span>
+              <QrCode size={14} />
+              <span>QR Verifier</span>
             </Link>
 
             <Link
               to="/border/watchlist"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                 isWatchlist
-                  ? "bg-rose-700 text-white shadow-xs"
-                  : "text-ink-soft hover:text-ink hover:bg-white"
+                  ? "bg-[#002B49] text-white"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <ShieldAlert size={15} />
+              <ShieldAlert size={14} />
               <span>Watchlist</span>
             </Link>
 
             <Link
               to="/border/overstays"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                 isOverstays
-                  ? "bg-amber-700 text-white shadow-xs"
-                  : "text-ink-soft hover:text-ink hover:bg-white"
+                  ? "bg-[#002B49] text-white"
+                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <Clock size={15} />
-              <span>Overstays</span>
+              <Clock size={14} />
+              <span>Overstay Report</span>
             </Link>
           </nav>
 
-          {/* Right: Quick Admin Switcher, Notification Bell & Profile Dropdown */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Right: Notifications & Profile Menu */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             {profile?.role === "admin" && (
               <Link
                 to="/admin"
-                className="hidden xl:inline-flex items-center gap-1.5 text-xs text-purple-700 font-semibold border border-purple-300 bg-purple-50 hover:bg-purple-700 hover:text-white px-2.5 py-1 rounded-lg transition"
+                className="hidden sm:inline-flex items-center gap-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold px-2.5 py-1.5 rounded border border-zinc-300 transition"
               >
                 <Landmark size={13} />
-                <span>Admin Console</span>
+                <span>Admin Hub</span>
               </Link>
             )}
 

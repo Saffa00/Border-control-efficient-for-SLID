@@ -18,7 +18,6 @@ import { useAuth } from "../context/AuthContext";
 import { SierraLeoneFlag } from "./SierraLeoneFlag";
 import { UserProfileMenu } from "./UserProfileMenu";
 import { NotificationBellMenu } from "./NotificationBellMenu";
-import { GovFooter } from "./GovHeader";
 
 interface ApplicantLayoutProps {
   children: ReactNode;
@@ -72,7 +71,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
             </span>
             <span className="hidden sm:inline text-zinc-400">•</span>
             <span className="hidden sm:inline-flex items-center gap-1 text-zinc-600">
-              <Lock size={12} className="text-emerald-700" />
+              <Lock size={12} className="text-zinc-700" />
               <span>Secure HTTPS Encrypted (.gov.sl)</span>
             </span>
           </div>
@@ -103,7 +102,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
       </div>
 
       {/* 2. Main Executive Header Bar */}
-      <header className="bg-[#002B49] text-white border-b-4 border-[#107C41] px-4 sm:px-8 py-3 shadow-md font-sans">
+      <header className="bg-[#002B49] text-white border-b-4 border-zinc-700 px-4 sm:px-8 py-3 shadow-md font-sans">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           {/* Left: Crest & Title */}
           <Link to="/dashboard" className="flex items-center gap-3.5 group">
@@ -113,7 +112,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
               className="w-11 h-11 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform"
             />
             <div>
-              <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest leading-none mb-0.5">
+              <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest leading-none mb-0.5">
                 Republic of Sierra Leone
               </p>
               <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-tight">
@@ -141,7 +140,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
           <div className="flex items-center gap-3">
             <Link
               to="/visa/new"
-              className="hidden sm:inline-flex items-center gap-1.5 bg-[#107C41] hover:bg-[#0B592E] text-white text-xs font-bold px-3.5 py-2 rounded transition cursor-pointer shadow-xs focus:ring-2 focus:ring-white"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-[#002B49] border border-white/30 hover:bg-[#001D33] text-white text-xs font-bold px-3.5 py-2 rounded transition cursor-pointer shadow-xs focus:ring-2 focus:ring-white"
             >
               <Plus size={15} />
               <span>Apply for e-Visa</span>
@@ -161,7 +160,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
           </div>
         </div>
 
-        {/* 3. Horizontal Top Header Navbar Links (No Left Sidebar!) */}
+        {/* 3. Unified Horizontal Top Header Navbar */}
         <nav className="max-w-7xl mx-auto pt-3 border-t border-white/15 mt-3 hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path;
@@ -179,7 +178,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
                 <Icon size={16} className={isActive ? "text-[#002B49]" : "text-zinc-300"} />
                 <span>{link.name}</span>
                 {link.badge && (
-                  <span className="bg-[#107C41] text-white text-[9px] font-bold uppercase px-1.5 py-0.2 rounded">
+                  <span className="bg-[#002B49] border border-white/30 text-white text-[9px] font-bold uppercase px-1.5 py-0.2 rounded">
                     {link.badge}
                   </span>
                 )}
@@ -219,7 +218,7 @@ export function ApplicantLayout({ children }: ApplicantLayoutProps) {
         {children}
       </main>
 
-      <GovFooter />
+      {/* Web Footer Removed as Requested */}
     </div>
   );
 }

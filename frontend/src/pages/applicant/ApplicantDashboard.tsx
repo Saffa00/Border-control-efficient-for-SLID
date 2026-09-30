@@ -6,17 +6,14 @@ import { ApplicantLayout } from "../../components/ApplicantLayout";
 import { ProgressTracker } from "../../components/ProgressTracker";
 import { SierraLeoneFlag } from "../../components/SierraLeoneFlag";
 import {
-  AlertTriangle,
   BookOpen,
   CheckCircle2,
   Eye,
   EyeOff,
   FileText,
-  HelpCircle,
   Plus,
   ShieldCheck,
   ArrowRight,
-  Plane,
   Sparkles,
 } from "lucide-react";
 
@@ -40,7 +37,6 @@ export default function ApplicantDashboard() {
   const { profile } = useAuth();
   const [passport, setPassport] = useState<Passport | null>(null);
   const [applications, setApplications] = useState<VisaApplication[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Masked Passport Toggle
@@ -50,7 +46,7 @@ export default function ApplicantDashboard() {
     if (!profile) return;
 
     async function loadData() {
-      const [{ data: p }, { data: apps }, { data: notifs }] = await Promise.all([
+      const [{ data: p }, { data: apps }] = await Promise.all([
         supabase
           .from("passports")
           .select("passport_number, expiry_date, issuing_country")
@@ -61,17 +57,10 @@ export default function ApplicantDashboard() {
           .select("application_id, application_ref, status, payment_status, submitted_at, review_notes, visa_types(name)")
           .eq("user_id", profile.user_id)
           .order("created_at", { ascending: false }),
-        supabase
-          .from("notifications")
-          .select("notification_id, message, created_at")
-          .eq("user_id", profile.user_id)
-          .order("created_at", { ascending: false })
-          .limit(3),
       ]);
 
       setPassport(p);
       setApplications((apps as any) ?? []);
-      setNotifications(notifs ?? []);
       setLoading(false);
     }
 
@@ -142,7 +131,7 @@ export default function ApplicantDashboard() {
               ) : (
                 <Link
                   to={`/visa/${actionNeededApp.application_id}/payment`}
-                  className="bg-[#107C41] hover:bg-[#0B592E] text-white text-sm font-bold px-5 py-2.5 rounded inline-flex items-center gap-2 focus:ring-2 focus:ring-white transition shadow-sm"
+                  className="bg-[#002B49] border border-white/40 hover:bg-[#001D33] text-white text-sm font-bold px-5 py-2.5 rounded inline-flex items-center gap-2 focus:ring-2 focus:ring-white transition shadow-sm"
                 >
                   <span>Pay e-Visa Fee &rarr;</span>
                 </Link>
@@ -156,11 +145,11 @@ export default function ApplicantDashboard() {
         {/* ------------------------------------------------------------- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Hero Greeting (2/3 width) */}
-          <div className="md:col-span-2 bg-[#002B49] text-white p-6 sm:p-8 rounded-lg shadow-sm border-b-4 border-[#107C41] flex flex-col justify-between space-y-4">
+          <div className="md:col-span-2 bg-[#002B49] text-white p-6 sm:p-8 rounded-lg shadow-sm border-b-4 border-zinc-700 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <SierraLeoneFlag width={18} height={12} />
-                <span className="text-xs font-bold uppercase tracking-widest text-[#107C41] bg-white px-2 py-0.5 rounded">
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-300 bg-white/10 px-2 py-0.5 rounded border border-white/20">
                   Verified Traveler Portal
                 </span>
               </div>
@@ -175,14 +164,14 @@ export default function ApplicantDashboard() {
             <div className="flex flex-wrap gap-3 pt-2">
               <Link
                 to="/visa/new"
-                className="bg-[#107C41] hover:bg-[#0B592E] text-white font-bold text-xs px-4 py-2.5 rounded transition inline-flex items-center gap-2 shadow-xs focus:ring-2 focus:ring-white"
+                className="bg-white text-[#002B49] hover:bg-zinc-100 font-bold text-xs px-4 py-2.5 rounded transition inline-flex items-center gap-2 shadow-xs focus:ring-2 focus:ring-white cursor-pointer"
               >
                 <Plus size={16} />
                 <span>Apply for e-Visa</span>
               </Link>
               <Link
                 to="/passport"
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold text-xs px-4 py-2.5 rounded transition inline-flex items-center gap-2 focus:ring-2 focus:ring-white"
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold text-xs px-4 py-2.5 rounded transition inline-flex items-center gap-2 focus:ring-2 focus:ring-white cursor-pointer"
               >
                 <BookOpen size={16} />
                 <span>Passport Registry</span>
@@ -197,7 +186,7 @@ export default function ApplicantDashboard() {
                 <BookOpen size={16} className="text-[#002B49]" />
                 <span>Registered Passport</span>
               </span>
-              <span className="text-[10px] font-bold uppercase bg-emerald-100 text-emerald-950 px-2 py-0.5 rounded border border-emerald-300">
+              <span className="text-[10px] font-bold uppercase bg-zinc-100 text-zinc-800 px-2 py-0.5 rounded border border-zinc-300">
                 Active
               </span>
             </div>
@@ -287,7 +276,7 @@ export default function ApplicantDashboard() {
                 </div>
                 <Link
                   to="/visa/new"
-                  className="bg-[#107C41] hover:bg-[#0B592E] text-white text-xs font-bold px-3 py-1.5 rounded transition inline-flex items-center gap-1 cursor-pointer focus:ring-2 focus:ring-[#107C41]"
+                  className="bg-[#002B49] hover:bg-[#001D33] text-white text-xs font-bold px-3 py-1.5 rounded transition inline-flex items-center gap-1 cursor-pointer focus:ring-2 focus:ring-[#002B49]"
                 >
                   <Plus size={14} />
                   <span>New Application</span>
@@ -303,7 +292,7 @@ export default function ApplicantDashboard() {
                   </p>
                   <Link
                     to="/visa/new"
-                    className="inline-flex items-center gap-1.5 bg-[#107C41] text-white text-xs font-bold px-4 py-2 rounded hover:bg-[#0B592E] transition mt-2 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 bg-[#002B49] text-white text-xs font-bold px-4 py-2 rounded hover:bg-[#001D33] transition mt-2 cursor-pointer"
                   >
                     <span>Start Application Now</span>
                     <ArrowRight size={14} />
@@ -376,11 +365,11 @@ export default function ApplicantDashboard() {
               </p>
               <div className="pt-2 text-[11px] text-amber-900 space-y-1.5 border-t border-amber-200">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-[#107C41]" />
+                  <ShieldCheck size={13} className="text-[#002B49]" />
                   <span>e-Visa clearance is scanned at entry checkpoint</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-[#107C41]" />
+                  <CheckCircle2 size={13} className="text-zinc-700" />
                   <span>ECOWAS nationals travel with ECOWAS passport</span>
                 </div>
               </div>

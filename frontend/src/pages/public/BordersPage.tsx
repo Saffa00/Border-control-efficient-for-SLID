@@ -1,529 +1,236 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { SierraLeoneFlag, SierraLeoneLargeFlag } from "../../components/SierraLeoneFlag";
-import { PublicFooter } from "../../components/PublicFooter";
+import { MapPin, Search, Plane, Ship, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "../../context/AuthContext";
+import { ApplicantLayout } from "../../components/ApplicantLayout";
+import { SierraLeoneFlag } from "../../components/SierraLeoneFlag";
 
-interface CheckpointDetail {
-  id: string;
+interface Checkpoint {
+  checkpoint_id?: string;
   name: string;
-  code: string;
-  type: "Air Port" | "Sea Port" | "Land Post" | "Tri-Border Post";
-  icon: string;
   location: string;
-  district: string;
-  coordinates: string;
-  established: string;
-  history: string;
-  significance: string;
-  facilities: string[];
-  commander: string;
-  operatingHours: string;
+  checkpoint_type: "airport" | "seaport" | "land" | string;
+  is_active?: boolean;
 }
 
-const CHECKPOINTS_DATA: CheckpointDetail[] = [
+const DEFAULT_CHECKPOINTS: Checkpoint[] = [
   {
-    id: "lungi",
-    name: "FNA Lungi International Airport",
-    code: "FNA-AIR-01",
-    type: "Air Port",
-    icon: "✈️",
-    location: "Lungi Coastal Peninsula, Port Loko District",
-    district: "North West Province",
-    coordinates: "8.6164° N, 13.1955° W",
-    established: "1949 (Converted from Royal Air Force WWII staging base)",
-    history:
-      "Originally established during World War II by the British Royal Air Force as an Atlantic transit station, Lungi was modernized into Sierra Leone's principal international airport following independence in 1961. In 2023, a state-of-the-art international terminal was inaugurated, expanding biometric e-Gates, dual biometric clearance lanes, and direct transatlantic connectivity.",
-    significance:
-      "The primary aerial gateway to Sierra Leone, handling over 90% of international scheduled commercial flights, diplomatic delegations, and high-priority VIP transit.",
-    facilities: [
-      "Biometric e-Gates & ICAO 9303 MRZ Optical Readers",
-      "High-Resolution Facial Recognition & Live Camera QR Decoders",
-      "Dedicated Consular Visa-on-Arrival Adjudication Booths",
-      "INTERPOL I-24/7 Red Notice Integrated Watchlist Gateway",
-      "24/7 Diplomatic & VIP Sovereign Protocol Lounge",
-    ],
-    commander: "Superintendent of Immigration (Airport Command)",
-    operatingHours: "24 Hours / 7 Days a week (Uninterrupted)",
+    name: "Freetown-Lungi International Airport (FNA)",
+    location: "Lungi, Port Loko District",
+    checkpoint_type: "airport",
   },
   {
-    id: "quay",
-    name: "Queen Elizabeth II Quay Maritime Port",
-    code: "FNA-SEA-02",
-    type: "Sea Port",
-    icon: "🚢",
-    location: "Cline Town, Freetown Deepwater Estuary",
-    district: "Western Area Urban",
-    coordinates: "8.4912° N, 13.2127° W",
-    established: "1953 (Named in honor of Queen Elizabeth II)",
-    history:
-      "Constructed on the southern bank of the Sierra Leone River, Queen Elizabeth II Quay is situated in the largest natural deepwater harbor in the African continent (and the third-largest in the world). The port has served for centuries as a vital maritime trade crossroads between Europe, the Americas, and West Africa.",
-    significance:
-      "The sovereign commercial lifeline of Sierra Leone, processing 100% of containerized ocean cargo, international maritime crew manifests, naval vessels, and offshore oil exploration crews.",
-    facilities: [
-      "Maritime Seafarer & Crew Manifest Automated Stamping",
-      "Port Surveillance Radar & AIS Vessel Tracking Integration",
-      "Container Terminal Border Clearance & Customs Liaison",
-      "Immigration Patrol Launches for Harbor Channel Surveillance",
-      "Maritime Overstay & Shore Pass Regulatory Desk",
-    ],
-    commander: "Chief Inspector of Immigration (Maritime Command)",
-    operatingHours: "24 Hours / 7 Days a week",
+    name: "Queen Elizabeth II Quay (Deep Water Quay)",
+    location: "Cline Town, Freetown",
+    checkpoint_type: "seaport",
   },
   {
-    id: "gbalamuya",
-    name: "Gbalamuya International Border Post",
-    code: "KMB-LND-03",
-    type: "Land Post",
-    icon: "🛂",
-    location: "Kambia District (Sierra Leone - Guinea Border)",
-    district: "North West Province",
-    coordinates: "9.1245° N, 12.9189° W",
-    established: "1963 (Formalized border customs & immigration post)",
-    history:
-      "Situated along the historical Trans-West African Coastal Highway connecting Freetown to Conakry, Gbalamuya is the bustling northern land portal of the Republic. It was upgraded under the ECOWAS Joint Border Post framework with integrated biometric screening desks, bilateral coordination offices, and heavy freight inspection facilities.",
-    significance:
-      "The vital economic and passenger conduit between Sierra Leone and Guinea, facilitating international passenger buses, cross-border commercial freight, and ECOWAS free-movement protocol travelers.",
-    facilities: [
-      "Joint ECOWAS Biometric Traveler Screening Kiosks",
-      "Heavy Freight Vehicle Cargo & Driver Stamping Bays",
-      "Real-Time Guinea Border Cross-Matching Watchlist System",
-      "Yellow Fever & Port Health Quarantine Inspection Unit",
-      "Rapid Response Land Patrol & Anti-Smuggling Unit",
-    ],
-    commander: "Senior Immigration Officer (Kambia Border Command)",
-    operatingHours: "06:00 AM - 10:00 PM Daily (Emergency 24/7 Transit)",
+    name: "Gbalamuya Post",
+    location: "Kambia, Guinea border",
+    checkpoint_type: "land",
   },
   {
-    id: "jendema",
-    name: "Jendema Border Post",
-    code: "PJH-LND-04",
-    type: "Land Post",
-    icon: "🛂",
-    location: "Pujehun District (Sierra Leone - Liberia Border / Bo Waterside)",
-    district: "Southern Province",
-    coordinates: "7.0422° N, 11.4583° W",
-    established: "1973 (Mano River Union Joint Crossing Point)",
-    history:
-      "Located at the historic Mano River bridge crossing opposite Bo Waterside in Liberia, Jendema represents a cornerstone of the Mano River Union (MRU) peace and regional cooperation framework. Modernized with satellite communications to the Freetown Central Data Hub, Jendema provides continuous border security and traveler clearance.",
-    significance:
-      "The primary southern land artery connecting Sierra Leone and the Republic of Liberia, managing commercial agricultural transit, regional diplomacy, and cross-border community passage.",
-    facilities: [
-      "Mano River Bridge Biometric Checkpoint Desks",
-      "Satellite-Linked Central Immigration Database Terminal",
-      "Cross-Border ECOWAS Identity Card & Passport Scanners",
-      "Overstay Assessment & Penalty Processing Desk",
-      "Community Liaison & Regional Border Surveillance Posts",
-    ],
-    commander: "Senior Immigration Officer (Pujehun Border Command)",
-    operatingHours: "06:00 AM - 08:00 PM Daily",
+    name: "Jendema Post",
+    location: "Pujehun, Liberia border",
+    checkpoint_type: "land",
   },
   {
-    id: "koindu",
-    name: "Koindu International Post",
-    code: "KLH-TRI-05",
-    type: "Tri-Border Post",
-    icon: "🛂",
-    location: "Kailahun District (Tri-Border Junction: SL - Guinea - Liberia)",
-    district: "Eastern Province",
-    coordinates: "8.4833° N, 10.3500° W",
-    established: "1930s (Historical International Trading Fair Hub)",
-    history:
-      "Koindu is renowned across West Africa as the host of the historic 'Koindu International Market', where merchants from Sierra Leone, Guinea, and Liberia have convened for over a century. The modern immigration post guards the strategic tri-border confluence of the Mano River, providing specialized surveillance and trade facilitation.",
-    significance:
-      "Strategic tri-border security post securing the eastern frontier, monitoring riverine crossings, and administering legitimate regional commerce across three neighboring nations.",
-    facilities: [
-      "Tri-Nation Border Manifest Registry & Stamping",
-      "Riverine Patrol Boat Surveillance Dock",
-      "Biometric Traveler Entry & Exit Validation Desk",
-      "National Security Eastern Sector Intelligence Link",
-      "Customs & Excise Joint Clearance Pavilion",
-    ],
-    commander: "Immigration Inspector (Kailahun Tri-Border Command)",
-    operatingHours: "06:00 AM - 07:00 PM Daily",
+    name: "Koindu Post",
+    location: "Kailahun, tri-border area",
+    checkpoint_type: "land",
   },
 ];
 
 export default function BordersPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [bordersDropdownOpen, setBordersDropdownOpen] = useState(false);
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<CheckpointDetail | null>(null);
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("All");
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { profile } = useAuth();
+  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("All");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setBordersDropdownOpen(false);
+    async function loadCheckpoints() {
+      const { data } = await supabase
+        .from("checkpoints")
+        .select("checkpoint_id, name, location, checkpoint_type, is_active")
+        .order("name");
+
+      if (data && data.length > 0) {
+        setCheckpoints(data as Checkpoint[]);
+      } else {
+        setCheckpoints(DEFAULT_CHECKPOINTS);
       }
+      setLoading(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    loadCheckpoints();
   }, []);
 
-  const filteredCheckpoints =
-    selectedTypeFilter === "All"
-      ? CHECKPOINTS_DATA
-      : CHECKPOINTS_DATA.filter((cp) => cp.type === selectedTypeFilter);
+  // Filtered checkpoints
+  const filteredCheckpoints = checkpoints.filter((cp) => {
+    const typeMatch =
+      typeFilter === "All" ||
+      cp.checkpoint_type.toLowerCase() === typeFilter.toLowerCase();
 
-  return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#0F172A] font-['Tahoma',sans-serif] flex flex-col justify-between selection:bg-[#1E8E5A] selection:text-white relative overflow-x-hidden">
-      {/* 1. Background Subtle Watermark */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-5 scale-105"
-          style={{ backgroundImage: "url('/passport-bg.png')" }}
-        />
-        <div className="absolute top-[-10%] left-[15%] w-[600px] h-[600px] bg-[#1E8E5A]/5 rounded-full blur-[150px]" />
-        <div className="absolute top-[35%] right-[10%] w-[650px] h-[650px] bg-[#0B4F6C]/5 rounded-full blur-[170px]" />
-      </div>
+    const query = searchQuery.trim().toLowerCase();
+    const searchMatch =
+      !query ||
+      cp.name.toLowerCase().includes(query) ||
+      cp.location.toLowerCase().includes(query) ||
+      cp.checkpoint_type.toLowerCase().includes(query);
 
-      {/* 2. Top National Ribbon & Ticker */}
-      <div className="relative z-50">
-        <div className="h-1.5 w-full grid grid-cols-3 shadow-xs">
-          <div className="bg-[#1E8E5A]"></div>
-          <div className="bg-white"></div>
-          <div className="bg-[#0B4F6C]"></div>
+    return typeMatch && searchMatch;
+  });
+
+  const content = (
+    <div className="space-y-8 font-sans">
+      {/* Header Banner */}
+      <div className="bg-[#002B49] text-white p-6 sm:p-8 rounded-lg shadow-sm border-b-4 border-zinc-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <SierraLeoneFlag width={18} height={12} />
+            <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">
+              Department of Immigration
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Official Border Checkpoints Directory
+          </h1>
+          <p className="text-sm text-zinc-200 mt-1 max-w-2xl">
+            Explore official ports of entry into Sierra Leone, filtering by airports, seaports, and land border posts.
+          </p>
         </div>
 
-        {/* Top Ticker */}
-        <div className="bg-white/95 border-b border-zinc-200/90 px-4 py-1.5 text-[11px] text-zinc-600 shadow-2xs">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <SierraLeoneFlag width={18} height={12} />
-              <span className="font-bold text-[#1E8E5A] uppercase tracking-wider">
-                Republic of Sierra Leone
-              </span>
-              <span className="text-zinc-400 hidden sm:inline">•</span>
-              <span className="text-zinc-600 hidden sm:inline">
-                National Border Posts &amp; Checkpoints Directory
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-[10px] text-zinc-500">
-              <span className="text-[#166E46] font-semibold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#1E8E5A] animate-pulse"></span>
-                <span>5 Sovereign Posts Connected</span>
-              </span>
-              <span className="hidden md:inline text-zinc-300">|</span>
-              <span className="hidden md:inline text-zinc-600 font-medium">Biometric Surveillance Grid</span>
-            </div>
-          </div>
+        <div className="bg-white/10 px-4 py-2 rounded text-right border border-white/20 shrink-0">
+          <p className="text-xs font-bold text-zinc-300 uppercase">Active Entry Posts</p>
+          <p className="text-2xl font-mono font-bold text-white">{checkpoints.length}</p>
         </div>
-
-        {/* Standard Navigation Bar */}
-        <nav className="border-b border-zinc-200/90 bg-white/95 backdrop-blur-md sticky top-0 shadow-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            {/* Logo with official writings */}
-            <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group flex-shrink-0">
-              <img
-                src="/slid-logo.png"
-                alt="Sierra Leone Immigration Department Crest"
-                className="w-11 h-11 sm:w-16 sm:h-16 object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300 flex-shrink-0"
-              />
-              <div className="flex flex-col">
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#1E8E5A] uppercase tracking-wider sm:tracking-widest leading-none mb-0.5 sm:mb-1">
-                  Republic of Sierra Leone
-                </span>
-                <span className="text-sm sm:text-xl font-bold text-[#0F172A] tracking-tight leading-tight group-hover:text-[#1E8E5A] transition">
-                  Department of Immigration
-                </span>
-                <span className="text-[10px] sm:text-[11px] text-zinc-500 font-medium leading-none mt-0.5">
-                  Sierra Leone Immigration Department (SLID)
-                </span>
-              </div>
-            </Link>
-
-            {/* Desktop Nav Items */}
-            <div className="hidden lg:flex items-center gap-1 xl:gap-2">
-              <Link
-                to="/"
-                className="text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] px-3.5 py-2 rounded-lg hover:bg-zinc-100 transition"
-              >
-                Home
-              </Link>
-              <Link
-                to="/about"
-                className="text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] px-3.5 py-2 rounded-lg hover:bg-zinc-100 transition"
-              >
-                About
-              </Link>
-              <Link
-                to="/services"
-                className="text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] px-3.5 py-2 rounded-lg hover:bg-zinc-100 transition"
-              >
-                Services
-              </Link>
-
-              {/* Borders Dropdown (Active) */}
-              <div className="relative" ref={dropdownRef}>
-                <div className="flex items-center">
-                  <Link
-                    to="/borders"
-                    className="text-xs font-bold text-[#1E8E5A] bg-[#1E8E5A]/10 border border-[#1E8E5A]/25 pl-3.5 pr-1.5 py-2 rounded-l-lg transition"
-                  >
-                    Borders &amp; Checkpoints
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setBordersDropdownOpen(!bordersDropdownOpen)}
-                    className="text-zinc-500 hover:text-zinc-900 pr-2.5 pl-1 py-2 rounded-r-lg bg-[#1E8E5A]/10 border-y border-r border-[#1E8E5A]/25 hover:bg-zinc-100 transition cursor-pointer"
-                    aria-label="Toggle Checkpoints Dropdown"
-                  >
-                    <span className={`text-[10px] inline-block transition-transform ${bordersDropdownOpen ? "rotate-180 text-[#1E8E5A]" : ""}`}>
-                      ▼
-                    </span>
-                  </button>
-                </div>
-
-                {bordersDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white border border-zinc-200 rounded-2xl shadow-xl py-2 z-50 animate-fade-in divide-y divide-zinc-100">
-                    <div className="px-4 py-2 text-[11px] font-bold text-[#1E8E5A] uppercase tracking-wider bg-zinc-50/80">
-                      National Border Checkpoints (5)
-                    </div>
-                    <div className="py-1">
-                      {CHECKPOINTS_DATA.map((cp) => (
-                        <div
-                          key={cp.code}
-                          onClick={() => {
-                            setSelectedCheckpoint(cp);
-                            setBordersDropdownOpen(false);
-                          }}
-                          className="flex items-center justify-between px-4 py-2.5 hover:bg-zinc-50 transition group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-base">{cp.icon}</span>
-                            <div>
-                              <p className="text-xs font-bold text-[#0F172A] group-hover:text-[#1E8E5A] transition leading-tight">
-                                {cp.name}
-                              </p>
-                              <span className="text-[10px] font-mono text-zinc-500">{cp.code}</span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-semibold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
-                            {cp.type}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Link
-                to="/contact"
-                className="text-xs font-semibold text-[#0F172A] hover:text-[#1E8E5A] px-3.5 py-2 rounded-lg hover:bg-zinc-100 transition"
-              >
-                Contact
-              </Link>
-            </div>
-          </div>
-        </nav>
       </div>
 
-      {/* 3. Main Content Container */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-1 space-y-10">
-        {/* Sovereign Hero Header */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0B4F6C] via-[#093e56] to-[#1E8E5A] p-8 sm:p-12 text-white shadow-xl">
-          <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Filter Tabs & Search Box */}
+      <div className="bg-white border border-zinc-300 p-4 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 shadow-xs">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-300 rounded focus:outline-none focus:border-[#002B49] focus:ring-2 focus:ring-[#002B49]"
+            placeholder="Search by checkpoint name, district, or border location..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-          <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-xs font-bold uppercase tracking-widest text-amber-300">
-              <SierraLeoneFlag width={18} height={12} />
-              <span>Republic of Sierra Leone • Frontier Command</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-              Designated Border Checkpoints
-            </h1>
-
-            <p className="text-sm sm:text-base text-sky-100/90 leading-relaxed max-w-2xl">
-              The 5 authorized points of entry across air, sea, and land frontiers under the sovereign jurisdiction of the Sierra Leone Immigration Department.
-            </p>
-
-            {/* Quick Metrics Bar */}
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-white/15">
-              <div>
-                <p className="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Air Gateways</p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-white">FNA Lungi Intl.</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Maritime Port</p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-white">Queen Elizabeth II</p>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <p className="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Land &amp; Tri-Borders</p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-white">Gbalamuya, Jendema, Koindu</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {["All", "Air Port", "Sea Port", "Land Post", "Tri-Border Post"].map((type) => (
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          {["All", "Airport", "Seaport", "Land"].map((t) => (
             <button
-              key={type}
-              type="button"
-              onClick={() => setSelectedTypeFilter(type)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                selectedTypeFilter === type
-                  ? "bg-[#1E8E5A] text-white shadow-xs"
-                  : "bg-white text-zinc-700 hover:bg-zinc-100 border border-zinc-200"
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3.5 py-1.5 rounded text-xs font-bold transition cursor-pointer ${
+                typeFilter === t
+                  ? "bg-[#002B49] text-white"
+                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               }`}
             >
-              {type === "All" ? "🌐 All 5 Stations" : type}
+              {t}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Checkpoint Cards Grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCheckpoints.map((cp) => (
-            <div
-              key={cp.id}
-              onClick={() => setSelectedCheckpoint(cp)}
-              className="bg-white border border-zinc-200/90 rounded-3xl p-6 shadow-sm hover:shadow-md hover:border-[#1E8E5A] transition-all cursor-pointer group flex flex-col justify-between hover:-translate-y-1"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl p-2 rounded-2xl bg-zinc-100 group-hover:scale-110 transition">
-                    {cp.icon}
-                  </span>
-                  <span className="text-[10px] uppercase font-bold bg-[#1E8E5A]/10 text-[#1E8E5A] border border-[#1E8E5A]/25 px-2.5 py-1 rounded-full">
-                    {cp.type}
-                  </span>
-                </div>
+      {/* Checkpoints Cards Grid */}
+      {loading ? (
+        <div className="py-16 text-center text-zinc-500 text-sm">
+          <div className="w-8 h-8 border-4 border-[#002B49] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          Loading official border checkpoints...
+        </div>
+      ) : filteredCheckpoints.length === 0 ? (
+        <div className="py-12 text-center text-zinc-500 text-sm border-2 border-dashed border-zinc-300 rounded bg-white">
+          No border checkpoints found matching your criteria.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCheckpoints.map((cp, idx) => {
+            const isAirport = cp.checkpoint_type.toLowerCase().includes("air");
+            const isSeaport = cp.checkpoint_type.toLowerCase().includes("sea");
 
-                <h3 className="text-base font-bold text-[#0F172A] group-hover:text-[#1E8E5A] transition mb-1">
-                  {cp.name}
-                </h3>
-                <p className="text-xs text-zinc-600 mb-3">{cp.location}</p>
-
-                <div className="bg-[#F8FAFC] p-3 rounded-2xl border border-zinc-200/80 space-y-1.5 text-xs text-zinc-600 mb-5">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">District:</span>
-                    <span className="font-semibold text-zinc-800">{cp.district}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Coordinates:</span>
-                    <span className="font-mono text-[#1E8E5A] font-bold">{cp.coordinates}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Hours:</span>
-                    <span className="font-medium text-zinc-800">{cp.operatingHours}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs font-semibold text-[#1E8E5A]">
-                <span>Station Online</span>
-                <span className="group-hover:underline flex items-center gap-1">
-                  <span>Inspect Full Dossier</span>
-                  <span>&rarr;</span>
-                </span>
-              </div>
-            </div>
-          ))}
-        </section>
-      </main>
-
-      {/* Intelligence Modal */}
-      {selectedCheckpoint && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl text-zinc-900 font-['Tahoma'] max-h-[90vh] overflow-y-auto animate-fade-in space-y-6">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-200 pb-4">
-              <div className="flex items-center gap-3.5">
-                <span className="text-4xl p-2 rounded-2xl bg-zinc-100">{selectedCheckpoint.icon}</span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase bg-[#1E8E5A]/10 text-[#1E8E5A] px-2.5 py-0.5 rounded border border-[#1E8E5A]/20">
-                      {selectedCheckpoint.type}
-                    </span>
-                    <span className="text-[10px] font-mono text-zinc-500 font-bold">{selectedCheckpoint.code}</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-zinc-900 mt-1">{selectedCheckpoint.name}</h3>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedCheckpoint(null)}
-                className="text-zinc-400 hover:text-zinc-900 bg-zinc-100 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer"
+            return (
+              <div
+                key={cp.checkpoint_id || idx}
+                className="bg-white border border-zinc-300 rounded-lg p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-[#002B49] transition"
               >
-                ✕
-              </button>
-            </div>
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2 border-b border-zinc-200 pb-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-100 text-zinc-800 border-zinc-300">
+                        {cp.checkpoint_type.toUpperCase()}
+                      </span>
+                      <h3 className="text-base font-bold text-zinc-900 mt-2 leading-snug">
+                        {cp.name}
+                      </h3>
+                    </div>
+                    <div className="p-2 rounded bg-zinc-100 text-[#002B49] shrink-0">
+                      {isAirport ? (
+                        <Plane size={20} />
+                      ) : isSeaport ? (
+                        <Ship size={20} />
+                      ) : (
+                        <MapPin size={20} />
+                      )}
+                    </div>
+                  </div>
 
-            {/* Geographical Specs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
-              <div>
-                <p className="text-[10px] font-bold uppercase text-zinc-500">Location</p>
-                <p className="font-semibold text-zinc-900 mt-0.5">{selectedCheckpoint.location}</p>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-500 uppercase">Location / District</p>
+                    <p className="text-sm font-semibold text-zinc-900 mt-0.5">{cp.location}</p>
+                  </div>
+
+                  {/* General "At the Checkpoint" Traveler Expectations Note */}
+                  <div className="p-3 bg-zinc-50 border border-zinc-200 rounded text-xs space-y-1">
+                    <p className="font-bold text-zinc-900 flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-[#002B49]" />
+                      <span>At the Checkpoint:</span>
+                    </p>
+                    <p className="text-zinc-600 leading-relaxed text-[11px]">
+                      Present your valid passport and your digital visa QR code to the border control officer at the desk for clearance.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase text-zinc-500">District / Province</p>
-                <p className="font-semibold text-zinc-900 mt-0.5">{selectedCheckpoint.district}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase text-zinc-500">GPS Coordinates</p>
-                <p className="font-mono text-[#1E8E5A] font-bold mt-0.5">{selectedCheckpoint.coordinates}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase text-zinc-500">Station Command</p>
-                <p className="font-semibold text-[#0B4F6C] mt-0.5">{selectedCheckpoint.commander}</p>
-              </div>
-            </div>
-
-            {/* History */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#D97706]">
-                📜 History &amp; Origin ({selectedCheckpoint.established})
-              </h4>
-              <p className="text-xs text-zinc-700 leading-relaxed bg-[#F8FAFC] p-4 rounded-xl border border-zinc-200">
-                {selectedCheckpoint.history}
-              </p>
-            </div>
-
-            {/* Significance */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1E8E5A]">
-                🛡️ Strategic National Significance
-              </h4>
-              <p className="text-xs text-zinc-700 leading-relaxed bg-[#F8FAFC] p-4 rounded-xl border border-zinc-200">
-                {selectedCheckpoint.significance}
-              </p>
-            </div>
-
-            {/* Operational Facilities */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#0284C7]">
-                ⚡ Operational Facilities &amp; Biometrics
-              </h4>
-              <ul className="space-y-1.5 text-xs text-zinc-700 bg-[#F8FAFC] p-4 rounded-xl border border-zinc-200">
-                {selectedCheckpoint.facilities.map((fac, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <span className="text-[#1E8E5A] font-bold">✓</span>
-                    <span>{fac}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Close Button */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCheckpoint(null)}
-                className="w-full bg-[#1E8E5A] hover:bg-[#166E46] text-white font-semibold py-3 rounded-xl text-xs transition cursor-pointer shadow-md"
-              >
-                Close Station Information
-              </button>
-            </div>
-          </div>
+            );
+          })}
         </div>
       )}
+    </div>
+  );
 
-      {/* Official Rich Public Footer */}
-      <PublicFooter />
+  if (profile) {
+    return <ApplicantLayout>{content}</ApplicantLayout>;
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] text-zinc-900 font-sans flex flex-col justify-between">
+      {/* Public Header */}
+      <header className="bg-[#002B49] text-white px-4 sm:px-8 py-4 border-b-4 border-zinc-700">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/slid-logo.png" alt="Sierra Leone Crest" className="w-10 h-10 object-contain" />
+            <div>
+              <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Republic of Sierra Leone</p>
+              <h1 className="text-lg font-bold text-white">Department of Immigration (SLID)</h1>
+            </div>
+          </Link>
+          <div className="flex items-center gap-3 text-xs font-bold">
+            <Link to="/" className="text-zinc-200 hover:text-white">Home</Link>
+            <Link to="/login" className="bg-white text-[#002B49] px-3.5 py-1.5 rounded">Sign In</Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
+        {content}
+      </main>
     </div>
   );
 }
