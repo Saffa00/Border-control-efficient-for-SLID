@@ -2,334 +2,242 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
-import { StatusStamp } from "../../components/StatusStamp";
-import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
-import { ApplicantLayout } from "../../components/ApplicantLayout";
+import { GovHeader, GovFooter } from "../../components/GovHeader";
+import { ProgressTracker } from "../../components/ProgressTracker";
 import { SierraLeoneFlag } from "../../components/SierraLeoneFlag";
 import {
+  AlertTriangle,
   BookOpen,
-  Plane,
-  Clock,
-  ShieldCheck,
-  Plus,
-  ArrowRight,
-  MapPin,
-  HelpCircle,
-  QrCode,
-  FileText,
-  AlertCircle,
   CheckCircle2,
-  Sparkles,
+  Clock,
+  Eye,
+  EyeOff,
+  FileText,
+  HelpCircle,
+  Lock,
+  Phone,
+  Plus,
+  ShieldCheck,
+  ArrowRight,
 } from "lucide-react";
 
 interface VisaApplication {
   application_id: string;
   application_ref: string;
   status: "draft" | "submitted" | "under_review" | "documents_requested" | "approved" | "rejected";
+  payment_status: "unpaid" | "paid";
   submitted_at: string | null;
+  review_notes: string | null;
   visa_types: { name: string } | null;
 }
 
 interface Passport {
   passport_number: string;
   expiry_date: string;
-}
-
-interface NotificationRow {
-  notification_id: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
+  issuing_country: string;
 }
 
 export default function ApplicantDashboard() {
   const { profile } = useAuth();
   const [passport, setPassport] = useState<Passport | null>(null);
   const [applications, setApplications] = useState<VisaApplication[]>([]);
-  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Masked Passport Toggle
+  const [showPassportNum, setShowPassportNum] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
 
-    async function loadDashboard() {
-      const [{ data: p }, { data: apps }, { data: notifs }] = await Promise.all([
+    async function loadData() {
+      const [{ data: p }, { data: apps }] = await Promise.all([
         supabase
           .from("passports")
-          .select("passport_number, expiry_date")
+          .select("passport_number, expiry_date, issuing_country")
           .eq("user_id", profile.user_id)
           .maybeSingle(),
         supabase
           .from("visa_applications")
-          .select("application_id, application_ref, status, submitted_at, visa_types(name)")
+          .select("application_id, application_ref, status, payment_status, submitted_at, review_notes, visa_types(name)")
           .eq("user_id", profile.user_id)
           .order("created_at", { ascending: false }),
-        supabase
-          .from("notifications")
-          .select("notification_id, message, created_at, is_read")
-          .eq("user_id", profile.user_id)
-          .order("created_at", { ascending: false })
-          .limit(4),
       ]);
 
       setPassport(p);
       setApplications((apps as any) ?? []);
-      setNotifications(notifs ?? []);
       setLoading(false);
     }
 
-    loadDashboard();
+    loadData();
   }, [profile]);
 
   if (loading) {
     return (
-      <ApplicantLayout>
-        <div className="p-16 text-center text-slate-500 text-sm">
-          <div className="w-8 h-8 border-3 border-[#1E8E5A] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          Loading your sovereign applicant dashboard...
-        </div>
-      </ApplicantLayout>
+      <div className="min-h-screen bg-slate-50 font-['Tahoma',sans-serif] flex flex-col">
+        <GovHeader portalTitle="Applicant Portal" />
+        <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-12 text-center text-slate-600">
+          <div className="w-8 h-8 border-4 border-[#0B4F6C] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-sm font-semibold">Loading your official applicant records...</p>
+        </main>
+        <GovFooter />
+      </div>
     );
   }
 
-  const activeVisasCount = applications.filter((a) => a.status === "approved").length;
-  const pendingAppsCount = applications.filter(
-    (a) => a.status === "submitted" || a.status === "under_review" || a.status === "documents_requested"
-  ).length;
+  // 1. Determine "What you need to do next" callout item
+  const actionNeededApp = applications.find(
+    (a) => a.status === "documents_requested" || (a.status === "submitted" && a.payment_status === "unpaid")
+  );
 
-  const firstName = profile?.full_name?.split(" ")[0] || "Traveler";
+  // Helper for masking passport number (e.g. SLE••••567)
+  function maskPassport(num: string) {
+    if (!num) return "—";
+    if (num.length <= 4) return "••••";
+    const prefix = num.slice(0, 3);
+    const suffix = num.slice(-3);
+    return `${prefix}••••${suffix}`;
+  }
 
   return (
-    <ApplicantLayout>
-      <div className="space-y-6">
-        {/* ------------------------------------------------------------- */}
-        {/* 1. HUMANIZED EXECUTIVE HERO WELCOME CARD                       */}
-        {/* ------------------------------------------------------------- */}
-        <div className="bg-gradient-to-r from-[#093548] via-[#0B4F6C] to-[#1E8E5A] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen bg-slate-100 text-slate-900 font-['Tahoma',sans-serif] flex flex-col">
+      <GovHeader
+        portalTitle="Applicant &amp; Traveler Portal"
+        portalSubtitle="Official Dashboard"
+        breadcrumbs={[{ name: "Applicant Portal", path: "/dashboard" }, { name: "Dashboard" }]}
+      />
 
-          <div className="relative z-10 max-w-2xl">
-            <div className="flex items-center gap-2 mb-2">
-              <SierraLeoneFlag width={20} height={13} />
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-emerald-300">
-                Republic of Sierra Leone • Directorate of Immigration
+      <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
+        {/* ------------------------------------------------------------- */}
+        {/* 1. GOV.UK ACTION NEEDED CALLOUT BANNER                        */}
+        {/* ------------------------------------------------------------- */}
+        {actionNeededApp ? (
+          <div className="bg-[#0B4F6C] text-white rounded-xl p-6 shadow-md border-l-8 border-amber-400 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-amber-400 text-slate-950 font-bold text-xs uppercase px-2.5 py-0.5 rounded">
+                Action Needed
               </span>
+              <span className="text-xs text-sky-200">Ref: {actionNeededApp.application_ref}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span>Good day, {firstName}</span>
-              <span className="text-xl">👋</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-sky-100/90 mt-1.5 leading-relaxed">
-              Manage your e-Visa applications, review registered passport credentials, and access official entry services for the Republic of Sierra Leone.
+
+            <h2 className="text-xl sm:text-2xl font-bold">What you need to do next</h2>
+
+            <p className="text-sm text-sky-100 leading-relaxed max-w-3xl">
+              {actionNeededApp.status === "documents_requested"
+                ? `The Consular Directorate has requested additional supporting documents: "${
+                    actionNeededApp.review_notes || "Please upload updated passport or travel itinerary."
+                  }"`
+                : "Your e-Visa application has been received. Please complete payment to submit your filing for consular adjudication."}
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 mt-4 text-xs">
-              <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-emerald-200">
-                <ShieldCheck size={14} className="text-emerald-300" />
-                <span className="font-semibold">Security Clearance: Verified</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-slate-200">
-                <Clock size={14} className="text-amber-300" />
-                <span>Freetown Local Time (GMT)</span>
-              </div>
+            <div className="pt-2">
+              {actionNeededApp.status === "documents_requested" ? (
+                <Link
+                  to={`/visa/${actionNeededApp.application_id}/status`}
+                  className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-sm font-bold px-5 py-2.5 rounded-md inline-flex items-center gap-2 focus:ring-2 focus:ring-white focus:outline-none transition shadow-sm"
+                >
+                  <span>Upload Required Documents</span>
+                  <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <Link
+                  to={`/payment/${actionNeededApp.application_id}`}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold px-5 py-2.5 rounded-md inline-flex items-center gap-2 focus:ring-2 focus:ring-white focus:outline-none transition shadow-sm"
+                >
+                  <span>Pay e-Visa Fee &rarr;</span>
+                </Link>
+              )}
             </div>
           </div>
-
-          <div className="relative z-10 flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto">
+        ) : (
+          <div className="bg-emerald-900 text-white rounded-xl p-6 shadow-md border-l-8 border-emerald-400 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 size={18} className="text-emerald-300" />
+                <span className="font-bold text-xs uppercase tracking-wider text-emerald-300">
+                  All Actions Up to Date
+                </span>
+              </div>
+              <h2 className="text-xl font-bold">No Outstanding Tasks Required</h2>
+              <p className="text-xs text-emerald-100 mt-1">
+                Your filings are up to date. The Directorate will notify you if additional documents are needed.
+              </p>
+            </div>
             <Link
               to="/visa/new"
-              className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-slate-950 font-bold text-xs px-5 py-3 rounded-2xl transition cursor-pointer shadow-lg flex items-center justify-center gap-2 text-center"
+              className="bg-white hover:bg-slate-100 text-[#0B4F6C] font-bold text-xs px-4 py-2.5 rounded-md inline-flex items-center gap-1.5 focus:ring-2 focus:ring-white focus:outline-none transition"
             >
               <Plus size={16} />
               <span>Apply for New e-Visa</span>
             </Link>
+          </div>
+        )}
+
+        {/* ------------------------------------------------------------- */}
+        {/* 2. PASSPORT & SECURITY CREDENTIALS PANEL                      */}
+        {/* ------------------------------------------------------------- */}
+        <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-3">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Registered Biometric Passport</h3>
+              <p className="text-xs text-slate-500">Official document used for e-Visa and border clearance</p>
+            </div>
             <Link
               to="/passport"
-              className="bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-5 py-2.5 rounded-2xl border border-white/20 transition cursor-pointer flex items-center justify-center gap-2 text-center"
+              className="text-xs font-bold text-[#0B4F6C] hover:underline inline-flex items-center gap-1"
             >
-              <BookOpen size={15} />
-              <span>Manage Passport</span>
+              <BookOpen size={14} />
+              <span>Manage Passport Details</span>
             </Link>
           </div>
-        </div>
 
-        {/* ------------------------------------------------------------- */}
-        {/* 2. EXECUTIVE METRIC CARDS GRID                                 */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Passport Status */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Passport Registry
-              </span>
-              <div className="p-2 rounded-xl bg-sky-50 text-[#0B4F6C]">
-                <BookOpen size={18} />
-              </div>
-            </div>
-            {passport ? (
-              <div>
-                <p className="text-lg font-bold font-mono text-slate-900 truncate">
-                  {passport.passport_number}
-                </p>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-                  <span className="text-slate-500">Expires: {passport.expiry_date}</span>
-                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
-                    Active
-                  </span>
+          {passport ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-slate-500 uppercase">Passport Number</p>
+                <div className="flex items-center gap-2 font-mono font-bold text-base text-slate-900">
+                  <span>{showPassportNum ? passport.passport_number : maskPassport(passport.passport_number)}</span>
+                  <button
+                    onClick={() => setShowPassportNum(!showPassportNum)}
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded"
+                    title={showPassportNum ? "Mask Passport Number" : "Show Passport Number"}
+                  >
+                    {showPassportNum ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
-            ) : (
-              <div>
-                <p className="text-xs text-amber-700 font-semibold mb-2">No Passport Recorded</p>
-                <Link
-                  to="/passport"
-                  className="text-xs font-bold text-[#1E8E5A] hover:underline flex items-center gap-1"
-                >
-                  <span>Register Passport &rarr;</span>
-                </Link>
-              </div>
-            )}
-          </div>
 
-          {/* Card 2: Active e-Visas */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Active e-Visas
-              </span>
-              <div className="p-2 rounded-xl bg-emerald-50 text-[#1E8E5A]">
-                <Plane size={18} />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-slate-500 uppercase">Issuing Authority</p>
+                <p className="font-semibold text-slate-800">{passport.issuing_country || "Sierra Leone"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-slate-500 uppercase">Expiry Date</p>
+                <p className="font-semibold text-slate-800">{passport.expiry_date}</p>
               </div>
             </div>
-            <p className="text-2xl font-bold font-mono text-slate-900">{activeVisasCount}</p>
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-              <span className="text-slate-500">Valid Entry Clearances</span>
-              <Link to="/dashboard#applications" className="text-[#1E8E5A] font-bold text-[10px] hover:underline">
-                View All
+          ) : (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-center justify-between gap-4">
+              <span>⚠️ No passport record found. Please register your passport to apply for e-Visas.</span>
+              <Link to="/passport" className="bg-amber-600 text-white font-bold px-3 py-1.5 rounded hover:bg-amber-700">
+                Register Passport
               </Link>
             </div>
-          </div>
-
-          {/* Card 3: Pending Applications */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Pending Filings
-              </span>
-              <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
-                <Clock size={18} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold font-mono text-slate-900">{pendingAppsCount}</p>
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-              <span className="text-slate-500">Under Consular Review</span>
-              <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full text-[10px]">
-                In Progress
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: Security Clearance */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Immigration Status
-              </span>
-              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-                <ShieldCheck size={18} />
-              </div>
-            </div>
-            <p className="text-sm font-bold text-emerald-800 flex items-center gap-1.5 mt-1">
-              <CheckCircle2 size={16} className="text-emerald-600" />
-              <span>Clear Entry Clearance</span>
-            </p>
-            <div className="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
-              No watchlist or overstay flags
-            </div>
-          </div>
+          )}
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* 3. QUICK COMMAND ACTIONS GRID                                  */}
+        {/* 3. APPLICATIONS LIST WITH ACCESSIBLE TEXT STATUS TAGS         */}
         {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            to="/visa/new"
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-[#1E8E5A] hover:shadow-md transition group flex flex-col items-start gap-2"
-          >
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-[#1E8E5A] group-hover:scale-110 transition">
-              <Plane size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 group-hover:text-[#1E8E5A] transition">
-                Apply for e-Visa
-              </p>
-              <p className="text-[10px] text-slate-500">Submit new visa filing</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/passport"
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-[#0B4F6C] hover:shadow-md transition group flex flex-col items-start gap-2"
-          >
-            <div className="p-2.5 rounded-xl bg-sky-50 text-[#0B4F6C] group-hover:scale-110 transition">
-              <BookOpen size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 group-hover:text-[#0B4F6C] transition">
-                Passport Details
-              </p>
-              <p className="text-[10px] text-slate-500">Update passport info</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/borders"
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-amber-600 hover:shadow-md transition group flex flex-col items-start gap-2"
-          >
-            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition">
-              <MapPin size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition">
-                Border Map
-              </p>
-              <p className="text-[10px] text-slate-500">View checkpoints & Lungi</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/contact"
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-purple-600 hover:shadow-md transition group flex flex-col items-start gap-2"
-          >
-            <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 transition">
-              <HelpCircle size={20} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900 group-hover:text-purple-600 transition">
-                Consular Support
-              </p>
-              <p className="text-[10px] text-slate-500">Get officer assistance</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* 4. MAIN PANEL: APPLICATIONS TABLE & HUMANIZED TRAVEL TIPS      */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="applications">
-          {/* Left Column: Recent Applications Table (2/3 width) */}
-          <div className="lg:col-span-2 space-y-4">
-            <SecurityPaperPanel className="p-6" showRosette>
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Your Visa Applications</h3>
-                  <p className="text-xs text-slate-500">Recent e-Visa filings &amp; status history</p>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Table Column (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 className="text-lg font-bold text-slate-900">Your e-Visa Applications</h3>
                 <Link
                   to="/visa/new"
-                  className="bg-[#1E8E5A] hover:bg-[#166e46] text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1 cursor-pointer"
+                  className="bg-[#0B4F6C] hover:bg-[#083a50] text-white text-xs font-bold px-3 py-2 rounded focus:ring-2 focus:ring-[#0B4F6C] focus:outline-none transition inline-flex items-center gap-1"
                 >
                   <Plus size={14} />
                   <span>New Application</span>
@@ -337,120 +245,118 @@ export default function ApplicantDashboard() {
               </div>
 
               {applications.length === 0 ? (
-                <div className="py-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                    <FileText size={24} />
-                  </div>
-                  <p className="text-xs font-semibold text-slate-700">No Visa Applications Submitted Yet</p>
-                  <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                    Ready to visit Sierra Leone? Start your official e-Visa application in minutes.
-                  </p>
-                  <Link
-                    to="/visa/new"
-                    className="inline-flex items-center gap-1.5 bg-[#1E8E5A] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#166e46] transition mt-2"
-                  >
-                    <span>Start Application Now</span>
-                    <ArrowRight size={14} />
-                  </Link>
+                <div className="py-12 text-center text-slate-500 text-xs">
+                  No visa applications filed yet. Click "New Application" to begin.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="py-2.5 px-3">Reference</th>
-                        <th className="py-2.5 px-3">Visa Type</th>
-                        <th className="py-2.5 px-3">Status</th>
-                        <th className="py-2.5 px-3 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-[#Tahoma]">
-                      {applications.map((app) => (
-                        <tr key={app.application_id} className="hover:bg-slate-50/80 transition">
-                          <td className="py-3 px-3 font-mono font-bold text-slate-900">
-                            {app.application_ref}
-                          </td>
-                          <td className="py-3 px-3 text-slate-700 font-medium">
-                            {app.visa_types?.name ?? "Standard Entry Visa"}
-                          </td>
-                          <td className="py-3 px-3">
-                            <StatusStamp status={app.status} />
-                          </td>
-                          <td className="py-3 px-3 text-right">
-                            <Link
-                              to={`/visa/${app.application_id}/status`}
-                              className="text-xs font-bold text-[#0B4F6C] hover:text-[#1E8E5A] hover:underline inline-flex items-center gap-1"
+                <div className="space-y-6">
+                  {applications.map((app) => {
+                    const statusTag =
+                      app.status === "approved"
+                        ? { label: "Approved", class: "bg-emerald-100 text-emerald-900 border-emerald-300" }
+                        : app.status === "rejected"
+                        ? { label: "Refused", class: "bg-rose-100 text-rose-900 border-rose-300" }
+                        : app.status === "documents_requested"
+                        ? { label: "Action Needed", class: "bg-amber-100 text-amber-900 border-amber-300 font-bold" }
+                        : { label: "Under Review", class: "bg-sky-100 text-sky-900 border-sky-300" };
+
+                    return (
+                      <div
+                        key={app.application_id}
+                        className="border border-slate-200 rounded-xl p-5 hover:border-slate-400 transition bg-slate-50/50 space-y-3"
+                      >
+                        {/* Header Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-900 text-sm">
+                              {app.application_ref}
+                            </span>
+                            <span className={`text-xs px-2.5 py-0.5 rounded border font-semibold ${statusTag.class}`}>
+                              {statusTag.label}
+                            </span>
+                          </div>
+                          <span className="text-xs text-slate-500">
+                            Submitted: {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString("en-GB") : "Draft"}
+                          </span>
+                        </div>
+
+                        {/* Detail Key-Value Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-4 text-xs pt-1">
+                          <div>
+                            <span className="text-slate-500">Visa Type: </span>
+                            <span className="font-bold text-slate-800">
+                              {app.visa_types?.name || "Standard Visitor Visa"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-500">Payment Status: </span>
+                            <span
+                              className={`font-semibold ${
+                                app.payment_status === "paid" ? "text-emerald-700" : "text-amber-700 font-bold"
+                              }`}
                             >
-                              <span>View Details</span>
-                              <ArrowRight size={12} />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              {app.payment_status === "paid" ? "Paid" : "Payment Pending"}
+                            </span>
+                          </div>
+
+                          <Link
+                            to={`/visa/${app.application_id}/status`}
+                            className="bg-white hover:bg-slate-100 border border-slate-300 text-[#0B4F6C] font-bold px-3 py-1.5 rounded transition text-xs inline-flex items-center gap-1"
+                          >
+                            <span>Track &amp; View &rarr;</span>
+                          </Link>
+                        </div>
+
+                        {/* Progress Tracker Bar */}
+                        <ProgressTracker status={app.status} paymentStatus={app.payment_status} />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </SecurityPaperPanel>
+            </div>
           </div>
 
-          {/* Right Column: Humanized Guidance & Notifications Panel (1/3 width) */}
+          {/* Consular Help Panel Column (1/3) */}
           <div className="space-y-6">
-            {/* Travel Guidance Card */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50/60 border border-amber-200 rounded-3xl p-5 space-y-3">
-              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
-                <Sparkles size={16} className="text-amber-600" />
-                <span>Humanized Travel Guidance</span>
-              </div>
-              <p className="text-xs text-amber-950/90 leading-relaxed font-medium">
-                💡 <strong>Important Travel Tip:</strong> Always verify that your passport has at least <strong>6 months remaining validity</strong> before booking flights to FNA Lungi International Airport.
-              </p>
-              <div className="pt-2 border-t border-amber-200/80 text-[11px] text-amber-800 space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" />
-                  <span>e-Visa clearance is scanned at entry</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 size={13} className="text-emerald-600" />
-                  <span>ECOWAS nationals travel with ECOWAS Pass</span>
-                </div>
-              </div>
-            </div>
+            <div className="bg-white border border-slate-300 rounded-xl p-6 shadow-xs space-y-4">
+              <h4 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center gap-2">
+                <HelpCircle size={18} className="text-[#0B4F6C]" />
+                <span>Help &amp; Official Contact</span>
+              </h4>
 
-            {/* Portal Activity Timeline */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 space-y-3 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Portal Announcements &amp; Alerts
-                </h4>
-                <Link to="/notifications" className="text-[10px] font-bold text-[#1E8E5A] hover:underline">
-                  All Notifications
-                </Link>
-              </div>
+              <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+                <p>
+                  Need assistance with your application? The Directorate of Immigration provides official consular support.
+                </p>
 
-              {notifications.length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">No recent alerts or announcements.</p>
-              ) : (
-                <div className="space-y-3">
-                  {notifications.map((n) => (
-                    <div key={n.notification_id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
-                      <p className="text-xs text-slate-800 font-medium leading-relaxed">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">
-                        {new Date(n.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  ))}
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+                  <p className="font-bold text-slate-900">Consular Support Hotline:</p>
+                  <p className="font-mono text-sm font-bold text-[#0B4F6C]">+232 22 222 411</p>
+                  <p className="text-[11px] text-slate-500">Mon – Fri: 08:00 – 17:00 GMT</p>
                 </div>
-              )}
+
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+                  <p className="font-bold text-slate-900">Official Directorate Email:</p>
+                  <p className="font-mono text-xs text-emerald-700 font-semibold">support@slid.gov.sl</p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200">
+                  <Link
+                    to="/contact"
+                    className="w-full text-center bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2 rounded text-xs block transition"
+                  >
+                    View Official FAQs &amp; Help Desk
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </ApplicantLayout>
+      </main>
+
+      <GovFooter />
+    </div>
   );
 }
