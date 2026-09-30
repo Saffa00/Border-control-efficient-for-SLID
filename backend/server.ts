@@ -9,6 +9,7 @@ import borderCheckRouter from "./routes/border-check";
 import notificationsRouter from "./routes/notifications";
 import phoneVerificationRouter from "./routes/phone-verification";
 import aiChatRouter from "./routes/ai-chat";
+import authRouter from "./routes/auth";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -110,6 +111,9 @@ app.get("/", (_req, res) => {
       "POST /api/notifications/payment-received",
       "POST /api/auth/send-phone-otp",
       "POST /api/auth/verify-phone-otp",
+      "POST /api/auth/request-password-reset",
+      "POST /api/auth/direct-password-reset",
+      "POST /api/auth/change-password",
     ],
   });
 });
@@ -120,6 +124,7 @@ app.get("/health", (_req, res) => {
 });
 
 // Register routers
+app.use(authRouter);
 app.use(adminUsersRouter);
 app.use(borderCheckRouter);
 app.use(notificationsRouter);

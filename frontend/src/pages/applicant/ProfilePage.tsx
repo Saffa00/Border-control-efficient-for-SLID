@@ -59,6 +59,13 @@ export default function ProfilePage() {
     emergencyContactPhone: "",
   });
 
+  // Password update state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   // Phone OTP state
   const [currentPhone, setCurrentPhone] = useState<string | null>(null);
   const [phoneVerified, setPhoneVerified] = useState(false);
@@ -75,7 +82,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!profile) return;
     async function loadUserData() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("users")
         .select(`
           full_name,
@@ -150,71 +157,149 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
-  async function handleSendCode() {
-    setOtpError(null);
-    setOtpSuccess(null);
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
 
-    const cleanInput = phoneInput.trim().replace(/[\s\-\(\)]/g, "");
-    const digitsOnly = cleanInput.replace(/\D/g, "");
-
-    if (digitsOnly.length < 8) {
-      setOtpError("Enter a valid mobile number (e.g. 076123456, +23276123456, or international format).");
+    if (!newPassword) {
+      setPasswordError("Please enter a new password.");
       return;
     }
 
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match. Please re-enter.");
+      return;
+    }
+
+    setUpdatingPassword(true);
+
+    try {
+      // 1. Try Supabase client auth update
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (!updateError) {
+        setPasswordSuccess("Account password updated successfully!");
+        setNewPassword("");
+        setConfirmPassword("");
+        setUpdatingPassword(false);
+        return;
+      }
+
+      // 2. Fallback to backend service-role API
+      if (profile?.user_id) {
+        const res = await fetch("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: profile.user_id,
+            newPassword: newPassword,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setPasswordSuccess("Account password updated successfully!");
+          setNewPassword("");
+          setConfirmPassword("");
+          setUpdatingPassword(false);
+          return;
+        } else if (data.error) {
+          throw new Error(data.error);
+        }
+      }
+
+      throw updateError;
+    } catch (err: any) {
+      setPasswordError(err.message || "Failed to update password. Please try again.");
+    } finally {
+      setUpdatingPassword(false);
+    }
+  }
+
+  async function handleSendCode() {
+    if (!phoneInput.trim()) return;
+    setOtpError(null);
+    setOtpSuccess(null);
     setSending(true);
+
     try {
       const res = await fetch("/api/auth/send-phone-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: profile?.user_id, phone: cleanInput }),
+        body: JSON.stringify({
+          phone: phoneInput.trim(),
+          userId: profile?.user_id,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not send verification SMS");
+
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { error: text };
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send verification SMS");
+      }
 
       setVerificationId(data.verificationId);
-      setExpiresInMinutes(data.expiresInMinutes ?? 5);
+      if (data.expiresInMinutes) setExpiresInMinutes(data.expiresInMinutes);
       setStep("code_sent");
-      setOtpSuccess(`Verification SMS dispatched to ${cleanInput}`);
-    } catch (e: any) {
-      setOtpError(e.message);
+      setOtpSuccess(`SMS verification code dispatched via EasySendSMS.`);
+    } catch (err: any) {
+      setOtpError(err.message || "Could not send SMS code.");
     } finally {
       setSending(false);
     }
   }
 
   async function handleVerifyCode() {
+    if (!codeInput.trim() || !verificationId) return;
     setOtpError(null);
     setOtpSuccess(null);
-
-    const cleanCode = codeInput.trim();
-    if (!/^\d{6}$/.test(cleanCode)) {
-      setOtpError("Enter the 6-digit verification code sent to your phone.");
-      return;
-    }
-
     setVerifying(true);
+
     try {
       const res = await fetch("/api/auth/verify-phone-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: profile?.user_id,
           verificationId,
-          code: cleanCode,
+          code: codeInput.trim(),
+          userId: profile?.user_id,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Verification failed");
 
-      const cleanInput = phoneInput.trim().replace(/[\s\-\(\)]/g, "");
-      setCurrentPhone(cleanInput);
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { error: text };
+      }
+
+      if (!res.ok || !data.verified) {
+        throw new Error(data.error || "Incorrect or expired verification code.");
+      }
+
+      setCurrentPhone(data.phone || phoneInput.trim());
       setPhoneVerified(true);
-      setFormData((prev) => ({ ...prev, phone: cleanInput, phoneVerified: true }));
       setStep("idle");
-      setOtpSuccess("Phone number successfully verified! You will now receive live SMS notifications.");
-    } catch (e: any) {
-      setOtpError(e.message);
+      setCodeInput("");
+      setPhoneInput("");
+      setOtpSuccess("Mobile phone number verified successfully!");
+    } catch (err: any) {
+      setOtpError(err.message || "Verification failed.");
     } finally {
       setVerifying(false);
     }
@@ -222,76 +307,63 @@ export default function ProfilePage() {
 
   function startChangeNumber() {
     setStep("idle");
-    setPhoneInput(currentPhone ?? "");
-    setCodeInput("");
+    setPhoneInput(currentPhone || "");
     setOtpError(null);
     setOtpSuccess(null);
   }
 
+  const carrierInfo = getCarrierInfo(phoneInput);
+
   if (loading) {
     return (
       <ApplicantLayout>
-        <div className="max-w-4xl mx-auto p-8 text-center text-slate-500">
-          Loading applicant profile...
+        <div className="py-16 text-center text-ink-soft text-sm">
+          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          Loading account profile details...
         </div>
       </ApplicantLayout>
     );
   }
 
-  const carrierInfo = getCarrierInfo(phoneInput);
-
   return (
     <ApplicantLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs uppercase tracking-widest text-[#1E8E5A] font-bold">
-                Republic of Sierra Leone
-              </span>
-              <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
-                Applicant Account
-              </span>
-            </div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mt-1">
-              Personal Bio-Data &amp; Contact Profile
-            </h1>
-          </div>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Account Settings &amp; Profile</h1>
+          <p className="text-xs text-ink-soft mt-0.5">
+            Manage your legal identity details, mobile phone verification, and security credentials.
+          </p>
         </div>
 
-        {/* 1. Main Bio-Data Form */}
+        {/* 1. Account Identity Form */}
         <SecurityPaperPanel className="p-6 sm:p-8" showRosette>
           <form onSubmit={handleSaveProfile} className="space-y-6">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-primary border-b border-primary-light pb-1 mb-3">
-                1. Personal Bio-Data
+                1. Account Credentials &amp; Legal Name
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
-                    Full Legal Name
+                    Full Legal Name <span className="text-status-rejected">*</span>
                   </label>
                   <input
+                    required
                     className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
-                    placeholder="e.g. John Alpha Kamara"
                     value={formData.fullName}
                     onChange={(e) => handleChange("fullName", e.target.value)}
-                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
-                    Email Address
+                    Registered Email Address
                   </label>
                   <input
-                    type="email"
-                    className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-canvas text-ink-soft cursor-not-allowed font-['Tahoma']"
-                    value={formData.email}
                     disabled
+                    className="w-full border border-primary-light/60 bg-canvas rounded-md px-3.5 py-2 text-sm font-mono text-ink-soft"
+                    value={formData.email}
                   />
-                  <p className="text-[10px] text-ink-soft mt-0.5">Primary login credential (managed by Supabase Auth).</p>
                 </div>
 
                 <div>
@@ -300,7 +372,7 @@ export default function ProfilePage() {
                   </label>
                   <input
                     className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
-                    placeholder="e.g. Sierra Leonean / British / Nigerian"
+                    placeholder="e.g. Sierra Leonean / British / American"
                     value={formData.nationality}
                     onChange={(e) => handleChange("nationality", e.target.value)}
                   />
@@ -312,7 +384,7 @@ export default function ProfilePage() {
                   </label>
                   <input
                     className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
-                    placeholder="e.g. Sierra Leone / United Kingdom"
+                    placeholder="e.g. United Kingdom"
                     value={formData.countryOfResidence}
                     onChange={(e) => handleChange("countryOfResidence", e.target.value)}
                   />
@@ -324,7 +396,7 @@ export default function ProfilePage() {
                   </label>
                   <input
                     className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
-                    placeholder="e.g. Civil Engineer / Merchant / Student"
+                    placeholder="e.g. Software Engineer / Consultant / Merchant"
                     value={formData.occupation}
                     onChange={(e) => handleChange("occupation", e.target.value)}
                   />
@@ -335,16 +407,16 @@ export default function ProfilePage() {
             {/* 2. Residential Address */}
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-primary border-b border-primary-light pb-1 mb-3">
-                2. Residential Address
+                2. Permanent Residential Address
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
-                    Address Line
+                    Street Address Line
                   </label>
                   <input
                     className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
-                    placeholder="e.g. 14 Siaka Stevens Street"
+                    placeholder="e.g. 15 Wilkinson Road"
                     value={formData.addressLine}
                     onChange={(e) => handleChange("addressLine", e.target.value)}
                   />
@@ -431,7 +503,71 @@ export default function ProfilePage() {
           </form>
         </SecurityPaperPanel>
 
-        {/* 4. Phone Number & EasySendSMS Verification Section */}
+        {/* 2. Security & Account Password Panel */}
+        <SecurityPaperPanel className="p-6 sm:p-8" showRosette>
+          <h2 className="font-display text-lg font-bold text-ink mb-1">
+            Security &amp; Account Password
+          </h2>
+          <p className="text-xs text-ink-soft mb-4">
+            Update your account password. Must be at least 8 characters long.
+          </p>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
+                  New Password <span className="text-status-rejected">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
+                  placeholder="At least 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
+                  Confirm New Password <span className="text-status-rejected">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary font-['Tahoma']"
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {passwordSuccess && (
+              <div className="p-3 bg-status-approved-bg border border-status-approved/30 rounded-md text-status-approved text-xs font-medium">
+                ✓ {passwordSuccess}
+              </div>
+            )}
+
+            {passwordError && (
+              <div className="p-3 bg-status-rejected-bg border border-status-rejected/30 rounded-md text-status-rejected text-xs font-medium">
+                ⚠️ {passwordError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={updatingPassword || !newPassword}
+              className="bg-[#002B49] text-white py-2.5 px-6 rounded-md text-sm font-semibold hover:bg-[#001D33] disabled:opacity-40 transition cursor-pointer shadow-xs"
+            >
+              {updatingPassword ? "Updating Password..." : "Update Password"}
+            </button>
+          </form>
+        </SecurityPaperPanel>
+
+        {/* 3. Phone Number & EasySendSMS Verification Section */}
         <SecurityPaperPanel className="p-6 sm:p-8" showRosette>
           <div className="flex items-center justify-between gap-4 mb-2">
             <div>
