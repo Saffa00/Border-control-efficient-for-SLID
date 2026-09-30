@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
-import { ApplicantNavbar } from "../../components/ApplicantNavbar";
+import { ApplicantLayout } from "../../components/ApplicantLayout";
 
 interface Passport {
   passport_id: string;
@@ -139,24 +139,21 @@ export default function PassportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-canvas text-ink font-body">
-        <ApplicantNavbar />
-        <div className="p-10 text-ink-soft text-center">Loading passport details...</div>
-      </div>
+      <ApplicantLayout>
+        <div className="p-10 text-slate-500 text-center">Loading passport details...</div>
+      </ApplicantLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-ink font-body">
-      <ApplicantNavbar />
-
-      <main className="max-w-xl mx-auto px-6 py-8 pb-24 sm:pb-8">
-        <div className="mb-6">
-          <Link to="/dashboard" className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
+    <ApplicantLayout>
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <Link to="/dashboard" className="text-xs text-[#1E8E5A] font-semibold hover:underline inline-flex items-center gap-1">
             &larr; Back to dashboard
           </Link>
-          <h1 className="font-display text-2xl font-bold mt-1">Biometric Passport Profile</h1>
-          <p className="text-sm text-ink-soft">
+          <h1 className="font-display text-2xl font-bold mt-1 text-slate-900">Biometric Passport Profile</h1>
+          <p className="text-xs text-slate-500">
             Your registered travel document used for visa applications and border clearance.
           </p>
         </div>
@@ -306,7 +303,7 @@ export default function PassportPage() {
             </div>
           </SecurityPaperPanel>
         )}
-      </main>
-    </div>
+      </div>
+    </ApplicantLayout>
   );
 }
