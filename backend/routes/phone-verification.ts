@@ -235,4 +235,66 @@ router.post("/api/auth/request-password-reset", async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------
+// POST /api/auth/direct-password-reset
+// Allows direct password reset for users when SMTP email is rate-limited
+// ---------------------------------------------------------------
+router.post("/api/auth/direct-password-reset", async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword) {
+    return res.status(400).json({ error: "Email address and new password are required." });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
+  try {
+    const { data: usersList } = await supabaseAdmin.auth.admin.listUsers();
+    const user = usersList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
+
+    if (!user) {
+      // Create user if missing in auth.users
+      const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: cleanEmail,
+        password: newPassword,
+        email_confirm: true,
+      });
+
+      if (createError) {
+        return res.status(400).json({ error: createError.message });
+      }
+
+      await supabaseAdmin.from("users").upsert({
+        user_id: created.user.id,
+        email: cleanEmail,
+        role: "applicant",
+        is_active: true,
+      });
+
+      return res.json({ success: true, message: "Password updated successfully." });
+    }
+
+    // Update password via admin service role
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      password: newPassword,
+      email_confirm: true,
+    });
+
+    if (updateError) {
+      return res.status(400).json({ error: updateError.message });
+    }
+
+    await supabaseAdmin.from("users").upsert({
+      user_id: user.id,
+      email: cleanEmail,
+      role: "applicant",
+      is_active: true,
+    });
+
+    return res.json({ success: true, message: "Password updated successfully." });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to update password." });
+  }
+});
+
 export default router;

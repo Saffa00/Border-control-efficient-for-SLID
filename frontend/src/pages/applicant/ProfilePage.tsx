@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
-import { ApplicantNavbar } from "../../components/ApplicantNavbar";
+import { ApplicantLayout } from "../../components/ApplicantLayout";
 
 type Step = "idle" | "code_sent";
 
@@ -230,44 +230,34 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-canvas font-body">
-        <ApplicantNavbar />
-        <div className="max-w-4xl mx-auto p-8 text-center text-ink-soft">
+      <ApplicantLayout>
+        <div className="max-w-4xl mx-auto p-8 text-center text-slate-500">
           Loading applicant profile...
         </div>
-      </div>
+      </ApplicantLayout>
     );
   }
 
   const carrierInfo = getCarrierInfo(phoneInput);
 
   return (
-    <div className="min-h-screen bg-canvas font-body text-ink pb-12 font-['Tahoma']">
-      <ApplicantNavbar />
-
-      <main className="max-w-4xl mx-auto px-6 py-8 pb-24 sm:pb-8 grid gap-8">
+    <ApplicantLayout>
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Page Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary-light pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs uppercase tracking-widest text-primary font-bold">
+              <span className="font-mono text-xs uppercase tracking-widest text-[#1E8E5A] font-bold">
                 Republic of Sierra Leone
               </span>
-              <span className="text-[10px] font-mono uppercase bg-accent-light text-accent px-2 py-0.5 rounded font-bold">
+              <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
                 Applicant Account
               </span>
             </div>
-            <h1 className="font-display text-2xl font-bold text-ink mt-1">
+            <h1 className="font-display text-2xl font-bold text-slate-900 mt-1">
               Personal Bio-Data &amp; Contact Profile
             </h1>
           </div>
-
-          <Link
-            to="/dashboard"
-            className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
-          >
-            &larr; Back to Dashboard
-          </Link>
         </div>
 
         {/* 1. Main Bio-Data Form */}
@@ -561,7 +551,7 @@ export default function ProfilePage() {
             </div>
           )}
         </SecurityPaperPanel>
-      </main>
-    </div>
+      </div>
+    </ApplicantLayout>
   );
 }

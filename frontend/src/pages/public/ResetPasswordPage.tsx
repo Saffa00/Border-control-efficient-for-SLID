@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
 import { SierraLeoneFlag } from "../../components/SierraLeoneFlag";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryEmail = searchParams.get("email") || "";
 
+  const [emailInput, setEmailInput] = useState(queryEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,10 +17,8 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Check if recovery access token is present
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        // Wait briefly in case onAuthStateChange is processing hash
         const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
           if (event === "PASSWORD_RECOVERY") {
             setError(null);
@@ -33,6 +34,8 @@ export default function ResetPasswordPage() {
   async function handlePasswordUpdate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const targetEmail = emailInput.trim().toLowerCase();
 
     if (!password) {
       setError("Please enter a new password.");
@@ -52,17 +55,49 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
+      // 1. Try Supabase Auth session update
       const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
-      if (updateError) {
-        throw updateError;
+      if (!updateError) {
+        setSuccess(true);
+        setLoading(false);
+        return;
       }
 
-      setSuccess(true);
+      // 2. Direct Backend Password Reset Fallback (for email rate-limited logins)
+      if (targetEmail) {
+        const res = await fetch("/api/auth/direct-password-reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: targetEmail,
+            newPassword: password,
+          }),
+        });
+
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          if (res.ok && data.success) {
+            setSuccess(true);
+            setLoading(false);
+            return;
+          } else if (data.error) {
+            throw new Error(data.error);
+          }
+        } catch (jsonErr: any) {
+          if (jsonErr.message) throw jsonErr;
+        }
+      }
+
+      throw updateError;
     } catch (err: any) {
-      setError(err.message || "Failed to update password. Your reset link may have expired.");
+      setError(
+        err.message ||
+          "Failed to update password. Please enter your email address above to reset directly."
+      );
     } finally {
       setLoading(false);
     }
@@ -116,6 +151,20 @@ export default function ResetPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
+                  Account Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="w-full border border-primary-light rounded-md px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  placeholder="your.email@example.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                />
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wide mb-1">
                   New Password (min 8 characters)

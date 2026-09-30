@@ -105,16 +105,30 @@ export default function ForgotPasswordPage() {
                   {email}
                 </span>
               </p>
-              <p className="text-[11px] text-ink-soft">
-                Please check your inbox (and spam folder). Click the link inside to set a new password.
-              </p>
+              
+              {/* Instant Password Reset Option for SMTP Rate-Limit Fallback */}
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-2 text-left my-3">
+                <p className="font-bold flex items-center gap-1">
+                  <span>⚡</span>
+                  <span>Didn't receive the email?</span>
+                </p>
+                <p className="text-[11px] text-amber-800 leading-snug">
+                  If your email provider blocks automated messages, you can set your new password directly below:
+                </p>
+                <Link
+                  to={`/reset-password?email=${encodeURIComponent(email)}`}
+                  className="w-full text-center bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-xs block transition shadow-xs"
+                >
+                  Set New Password Instantly &rarr;
+                </Link>
+              </div>
 
-              <div className="pt-4 border-t border-primary-light/60">
+              <div className="pt-2 border-t border-primary-light/60">
                 <Link
                   to={backLink}
                   className="w-full inline-block bg-primary text-white py-2.5 rounded-md text-sm font-semibold hover:bg-primary-dark transition shadow-xs"
                 >
-                  Return to Sign In
+                  Sign In
                 </Link>
               </div>
             </div>
@@ -152,12 +166,24 @@ export default function ForgotPasswordPage() {
                 {loading ? "Sending Reset Link..." : "Send Password Reset Link"}
               </button>
 
-              <div className="text-center pt-2">
+              {/* Direct Instant Reset Action if user already entered email */}
+              {email && (
+                <div className="text-center pt-2">
+                  <Link
+                    to={`/reset-password?email=${encodeURIComponent(email)}`}
+                    className="text-xs text-[#1E8E5A] font-bold hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>Instant Password Reset for {email} &rarr;</span>
+                  </Link>
+                </div>
+              )}
+
+              <div className="text-center pt-1">
                 <Link
                   to={backLink}
-                  className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
+                  className="text-xs text-ink-soft hover:text-ink transition"
                 >
-                  &larr; Return to Sign In
+                  Sign In
                 </Link>
               </div>
             </form>

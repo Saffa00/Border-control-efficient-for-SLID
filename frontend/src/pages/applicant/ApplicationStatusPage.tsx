@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import { StatusStamp } from "../../components/StatusStamp";
 import { SecurityPaperPanel } from "../../components/SecurityPaperPanel";
-import { ApplicantNavbar } from "../../components/ApplicantNavbar";
+import { ApplicantLayout } from "../../components/ApplicantLayout";
 
 interface Application {
   application_id: string;
@@ -57,22 +57,20 @@ export default function ApplicationStatusPage() {
   }, [id]);
 
   if (loading) return (
-    <div className="min-h-screen bg-canvas text-ink font-body">
-      <ApplicantNavbar />
-      <div className="p-10 text-ink-soft text-center">Loading application status...</div>
-    </div>
+    <ApplicantLayout>
+      <div className="p-10 text-slate-500 text-center">Loading application status...</div>
+    </ApplicantLayout>
   );
 
   if (!application) return (
-    <div className="min-h-screen bg-canvas text-ink font-body">
-      <ApplicantNavbar />
-      <div className="p-10 text-ink-soft text-center">
-        <p className="text-lg font-medium text-ink">Application not found.</p>
-        <Link to="/dashboard" className="text-primary text-sm underline mt-2 inline-block">
-          Return to dashboard
+    <ApplicantLayout>
+      <div className="p-10 text-slate-500 text-center">
+        <p className="text-lg font-medium text-slate-900">Application not found.</p>
+        <Link to="/dashboard" className="text-[#1E8E5A] font-bold text-xs underline mt-2 inline-block">
+          Go to Dashboard
         </Link>
       </div>
-    </div>
+    </ApplicantLayout>
   );
 
   const visa = Array.isArray(application.digital_visas)
@@ -80,15 +78,11 @@ export default function ApplicationStatusPage() {
     : application.digital_visas;
 
   return (
-    <div className="min-h-screen bg-canvas text-ink font-body">
-      <ApplicantNavbar />
-
-      <main className="max-w-3xl mx-auto px-6 py-8 pb-24 sm:pb-8 grid gap-6">
+    <ApplicantLayout>
+      <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Link to="/dashboard" className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
-              &larr; Back to my dashboard
-            </Link>
+            <h1 className="font-display text-2xl font-bold font-mono text-slate-900">{application.application_ref}</h1>
             <h1 className="font-display text-2xl font-bold mt-1">Application {application.application_ref}</h1>
           </div>
           {application.payment_status === "unpaid" && application.status !== "rejected" && (
@@ -186,7 +180,7 @@ export default function ApplicationStatusPage() {
             </ul>
           )}
         </SecurityPaperPanel>
-      </main>
-    </div>
+      </div>
+    </ApplicantLayout>
   );
 }
