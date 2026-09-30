@@ -596,9 +596,12 @@ create policy "reset_tokens_own_only" on public.password_reset_tokens
 create policy "login_attempts_admin_only" on public.login_attempts
   for select using (public.current_role() = 'admin');
 
--- ---- admin_audit_log (admins only) ----
-create policy "audit_log_admin_only" on public.admin_audit_log
+-- ---- admin_audit_log (append-only immutable audit trail) ----
+create policy "audit_log_select_admin" on public.admin_audit_log
   for select using (public.current_role() = 'admin');
+create policy "audit_log_insert_staff" on public.admin_audit_log
+  for insert with check (public.is_staff());
+-- Note: Intentionally NO update or delete policies created — audit log entries are immutable.
 
 -- ============================================================
 -- RULES-BASED RISK SCORING FUNCTION

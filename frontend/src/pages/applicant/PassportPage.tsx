@@ -81,7 +81,19 @@ export default function PassportPage() {
     let photoPath: string | null = passport?.photo_path ?? null;
 
     if (photoFile && profile) {
-      const path = `${profile.user_id}/${Date.now()}-${photoFile.name}`;
+      // Security Validation: File Type & Size Checks
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(photoFile.type)) {
+        setError("Invalid photo format. Only JPG, PNG, or WEBP image files are allowed.");
+        return;
+      }
+      if (photoFile.size > 5 * 1024 * 1024) {
+        setError("File size exceeds 5MB limit. Please upload a smaller passport photo.");
+        return;
+      }
+
+      const safeName = photoFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const path = `${profile.user_id}/${Date.now()}-${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("passport-photos")
         .upload(path, photoFile, { upsert: true });

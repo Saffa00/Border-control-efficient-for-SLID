@@ -102,9 +102,26 @@ export default function NewVisaApplicationPage() {
 
       // 3. Upload documents to Supabase Storage if present
       if (form.documents.length > 0) {
+        const allowedDocTypes = [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+        ];
         for (const file of form.documents) {
           try {
-            const path = `${application.application_id}/${file.name}`;
+            // Security Checks: Format & Size Limits
+            if (file.type && !allowedDocTypes.includes(file.type)) {
+              console.warn(`Skipping unsupported document type: ${file.name}`);
+              continue;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+              console.warn(`Skipping oversized document (>10MB): ${file.name}`);
+              continue;
+            }
+
+            const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+            const path = `${application.application_id}/${Date.now()}-${safeName}`;
             const { error: uploadError } = await supabase.storage
               .from("visa-documents")
               .upload(path, file);
